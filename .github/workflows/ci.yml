@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: contabil
+          POSTGRES_PASSWORD: contabil
+          POSTGRES_DB: contabil_saas_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U contabil"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: "postgresql://contabil:contabil@localhost:5432/contabil_saas_test?schema=public"
+      JWT_SECRET: "ci-test-secret"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Prisma generate + migrate
+        working-directory: apps/api
+        run: |
+          npx prisma generate
+          npx prisma migrate deploy
+      - name: Typecheck
+        working-directory: apps/api
+        run: npx tsc --noEmit
+      - name: Build
+        working-directory: apps/api
+        run: npx nest build
+      - name: e2e tests
+        working-directory: apps/api
+        run: npm run test:e2e
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        working-directory: apps/web
+        run: npx tsc --noEmit
+      - name: Build
+        working-directory: apps/web
+        env:
+          NEXT_PUBLIC_API_URL: "http://localhost:3001"
+        run: npx next build
