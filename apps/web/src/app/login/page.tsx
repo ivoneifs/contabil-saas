@@ -2,7 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiFetch, setToken } from '@/lib/api';
+import { apiFetch, setToken, setIsSuperAdmin } from '@/lib/api';
 
 interface OrgOption {
   organizationId: string;
@@ -25,7 +25,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const data = await apiFetch<
-        { accessToken: string } | { requiresOrganizationSelection: true; organizations: OrgOption[] }
+        | { accessToken: string; isSuperAdmin: boolean }
+        | { requiresOrganizationSelection: true; organizations: OrgOption[] }
       >('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password, organizationId: organizationId || undefined }),
@@ -37,6 +38,7 @@ export default function LoginPage() {
       }
 
       setToken(data.accessToken);
+      setIsSuperAdmin(data.isSuperAdmin);
       router.push('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao entrar.');

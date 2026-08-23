@@ -35,8 +35,8 @@ export interface ConsultarNotaResultado {
  * fora de src/fiscal/gateways.
  */
 export interface FiscalGateway {
-  emitirNota(input: EmitirNotaInput): Promise<EmitirNotaResultado>;
-  consultarNota(externalId: string): Promise<ConsultarNotaResultado>;
+  emitirNota(organizationId: string, input: EmitirNotaInput): Promise<EmitirNotaResultado>;
+  consultarNota(organizationId: string, externalId: string): Promise<ConsultarNotaResultado>;
 }
 
 export const FISCAL_GATEWAY = Symbol('FISCAL_GATEWAY');

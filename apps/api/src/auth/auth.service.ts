@@ -46,7 +46,14 @@ export class AuthService {
       return { user, organization, membership };
     });
 
-    return this.issueTokenResponse(user.id, user.email, organization.id, organization.name, membership.role);
+    return this.issueTokenResponse(
+      user.id,
+      user.email,
+      organization.id,
+      organization.name,
+      membership.role,
+      user.isSuperAdmin,
+    );
   }
 
   async login(dto: LoginDto) {
@@ -64,6 +71,11 @@ export class AuthService {
     }
 
     if (user.memberships.length === 0) {
+      if (user.isSuperAdmin) {
+        // Super admin sem organização própria: token sem organizationId,
+        // válido apenas para as rotas /admin/* (plataforma inteira).
+        return this.issueTokenResponse(user.id, user.email, '', '', MembershipRole.ADMIN, true);
+      }
       throw new BadRequestException('Usuário não pertence a nenhuma organização.');
     }
 
@@ -92,6 +104,7 @@ export class AuthService {
       membership.organizationId,
       membership.organization.name,
       membership.role,
+      user.isSuperAdmin,
     );
   }
 
@@ -118,13 +131,15 @@ export class AuthService {
     organizationId: string,
     organizationName: string,
     role: MembershipRole,
+    isSuperAdmin: boolean,
   ) {
-    const payload: JwtPayload = { sub: userId, email, organizationId, role };
+    const payload: JwtPayload = { sub: userId, email, organizationId, role, isSuperAdmin };
     return {
       accessToken: this.jwtService.sign(payload),
       user: { id: userId, email },
-      organization: { id: organizationId, name: organizationName },
+      organization: organizationId ? { id: organizationId, name: organizationName } : null,
       role,
+      isSuperAdmin,
     };
   }
 }

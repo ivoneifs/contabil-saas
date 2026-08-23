@@ -11,6 +11,16 @@ export function setToken(token: string) {
 
 export function clearToken() {
   window.localStorage.removeItem('accessToken');
+  window.localStorage.removeItem('isSuperAdmin');
+}
+
+export function setIsSuperAdmin(value: boolean) {
+  window.localStorage.setItem('isSuperAdmin', value ? '1' : '0');
+}
+
+export function getIsSuperAdmin(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.localStorage.getItem('isSuperAdmin') === '1';
 }
 
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {

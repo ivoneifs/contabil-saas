@@ -112,13 +112,31 @@ model Organization {
 
   memberships Membership[]
   clients     Client[]
+  integracoes IntegracoesConfig?
 
   @@map("organizations")
 }
 
+// Credenciais de integrações externas configuradas pelo próprio escritório
+// (via tela de Configurações), em vez de variáveis de ambiente da plataforma.
+// Se nulo, o sistema usa a credencial padrão da plataforma (env var), quando existir.
+model IntegracoesConfig {
+  id             String   @id @default(uuid())
+  organizationId String   @unique
+  focusNfeToken    String?
+  focusNfeBaseUrl  String?
+  asaasApiKey      String?
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("integracoes_config")
+}
+
 // Um usuário que pode pertencer a uma ou mais organizações (escritórios).
 model User {
-  id           String   @id @default(uuid())
+  id            String   @id @default(uuid())
+  isSuperAdmin  Boolean  @default(false)
   email        String   @unique
   passwordHash String
   name         String

@@ -3,7 +3,7 @@
 import { useEffect, useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { apiFetch, clearToken } from '@/lib/api';
+import { apiFetch, clearToken, getIsSuperAdmin } from '@/lib/api';
 
 interface Client {
   id: string;
@@ -27,6 +27,11 @@ export default function DashboardPage() {
   const [buscandoCnpj, setBuscandoCnpj] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSuperAdmin, setIsSuperAdminState] = useState(false);
+
+  useEffect(() => {
+    setIsSuperAdminState(getIsSuperAdmin());
+  }, []);
 
   async function loadClients() {
     try {
@@ -109,6 +114,11 @@ export default function DashboardPage() {
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Clientes</h1>
         <div className="flex gap-4">
+          {isSuperAdmin && (
+            <Link href="/dashboard/admin" className="text-sm font-medium text-purple-600">
+              Super Admin
+            </Link>
+          )}
           <Link href="/dashboard/agenda" className="text-sm text-blue-600">
             Agenda
           </Link>

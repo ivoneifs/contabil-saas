@@ -32,7 +32,7 @@ export class NotasFiscaisService {
       },
     });
 
-    const resultado = await this.gateway.emitirNota({
+    const resultado = await this.gateway.emitirNota(organizationId, {
       tipo: dto.tipo,
       uf: client.uf,
       cnpjCpfCliente: client.cnpjCpf,
@@ -77,7 +77,7 @@ export class NotasFiscaisService {
     if (!nota.gatewayExternalId) {
       return nota;
     }
-    const resultado = await this.gateway.consultarNota(nota.gatewayExternalId);
+    const resultado = await this.gateway.consultarNota(organizationId, nota.gatewayExternalId);
     return this.prisma.notaFiscal.update({
       where: { id: nota.id },
       data: {

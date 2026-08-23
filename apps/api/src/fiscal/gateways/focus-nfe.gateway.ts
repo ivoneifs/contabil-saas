@@ -1,5 +1,6 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../../prisma/prisma.service';
 import {
   ConsultarNotaResultado,
   EmitirNotaInput,
@@ -10,29 +11,33 @@ import {
 /**
  * Adapter para o gateway fiscal Focus NFe (https://focusnfe.com.br).
  *
- * Requer FOCUS_NFE_TOKEN e FOCUS_NFE_BASE_URL configurados (ver .env.example).
- * Até essas credenciais existirem (o usuário precisa criar a própria conta
- * no provedor), este adapter recusa a chamada com um erro claro em vez de
- * simular sucesso — nunca inventamos uma nota fiscal "autorizada" sem o
- * gateway real ter confirmado isso.
+ * Credenciais: primeiro tenta a configuração da própria organização (tela
+ * Configurações > Integrações); se não houver, cai para as variáveis de
+ * ambiente da plataforma (FOCUS_NFE_TOKEN/FOCUS_NFE_BASE_URL). Sem nenhuma
+ * das duas, recusa a chamada com um erro claro em vez de simular sucesso —
+ * nunca inventamos uma nota fiscal "autorizada" sem o gateway real confirmar.
  */
 @Injectable()
 export class FocusNfeGateway implements FiscalGateway {
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    private readonly prisma: PrismaService,
+  ) {}
 
-  private getCredentials() {
-    const token = this.config.get<string>('FOCUS_NFE_TOKEN');
-    const baseUrl = this.config.get<string>('FOCUS_NFE_BASE_URL');
+  private async getCredentials(organizationId: string) {
+    const org = await this.prisma.integracoesConfig.findUnique({ where: { organizationId } });
+    const token = org?.focusNfeToken ?? this.config.get<string>('FOCUS_NFE_TOKEN');
+    const baseUrl = org?.focusNfeBaseUrl ?? this.config.get<string>('FOCUS_NFE_BASE_URL');
     if (!token || !baseUrl) {
       throw new ServiceUnavailableException(
-        'Gateway fiscal (Focus NFe) não configurado. Defina FOCUS_NFE_TOKEN e FOCUS_NFE_BASE_URL.',
+        'Gateway fiscal (Focus NFe) não configurado. Configure em Configurações > Integrações.',
       );
     }
     return { token, baseUrl };
   }
 
-  async emitirNota(input: EmitirNotaInput): Promise<EmitirNotaResultado> {
-    const { token, baseUrl } = this.getCredentials();
+  async emitirNota(organizationId: string, input: EmitirNotaInput): Promise<EmitirNotaResultado> {
+    const { token, baseUrl } = await this.getCredentials(organizationId);
     const endpoint = input.tipo === 'NFCE' ? '/v2/nfce' : '/v2/nfe';
 
     const response = await fetch(`${baseUrl}${endpoint}`, {
@@ -66,8 +71,8 @@ export class FocusNfeGateway implements FiscalGateway {
     };
   }
 
-  async consultarNota(externalId: string): Promise<ConsultarNotaResultado> {
-    const { token, baseUrl } = this.getCredentials();
+  async consultarNota(organizationId: string, externalId: string): Promise<ConsultarNotaResultado> {
+    const { token, baseUrl } = await this.getCredentials(organizationId);
 
     const response = await fetch(`${baseUrl}/v2/nfe/${externalId}`, {
       headers: {

@@ -2,7 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiFetch, setToken } from '@/lib/api';
+import { apiFetch, setToken, setIsSuperAdmin } from '@/lib/api';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -18,11 +18,12 @@ export default function SignupPage() {
     setError(null);
     setLoading(true);
     try {
-      const data = await apiFetch<{ accessToken: string }>('/auth/signup', {
+      const data = await apiFetch<{ accessToken: string; isSuperAdmin: boolean }>('/auth/signup', {
         method: 'POST',
         body: JSON.stringify({ organizationName, name, email, password }),
       });
       setToken(data.accessToken);
+      setIsSuperAdmin(data.isSuperAdmin);
       router.push('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao criar conta.');
