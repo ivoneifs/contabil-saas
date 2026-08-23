@@ -52,4 +52,34 @@ describe('Auth (e2e)', () => {
   it('rota protegida sem token retorna 401', async () => {
     await request(app.getHttpServer()).get('/clients').expect(401);
   });
+
+  it('troca de senha funciona e permite login com a nova senha', async () => {
+    const { accessToken, email } = await signupTestOrg(app, { password: 'senha-antiga1' });
+
+    await request(app.getHttpServer())
+      .post('/auth/change-password')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ currentPassword: 'senha-antiga1', newPassword: 'senha-nova123' })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email, password: 'senha-nova123' })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email, password: 'senha-antiga1' })
+      .expect(401);
+  });
+
+  it('troca de senha com senha atual errada retorna 401', async () => {
+    const { accessToken } = await signupTestOrg(app);
+
+    await request(app.getHttpServer())
+      .post('/auth/change-password')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ currentPassword: 'senha-errada1', newPassword: 'senha-nova123' })
+      .expect(401);
+  });
 });

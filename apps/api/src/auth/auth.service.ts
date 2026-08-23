@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -10,6 +11,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { MembershipRole } from '@prisma/client';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtPayload } from './jwt-payload.interface';
 
 @Injectable()
@@ -91,6 +93,23 @@ export class AuthService {
       membership.organization.name,
       membership.role,
     );
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordDto) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
+    const currentOk = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!currentOk) {
+      throw new UnauthorizedException('Senha atual incorreta.');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.newPassword, 10);
+    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+
+    return { success: true };
   }
 
   private issueTokenResponse(

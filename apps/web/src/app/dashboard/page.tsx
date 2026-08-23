@@ -66,9 +66,14 @@ export default function DashboardPage() {
     <main className="mx-auto max-w-3xl p-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Clientes</h1>
-        <button onClick={handleLogout} className="text-sm text-blue-600">
-          Sair
-        </button>
+        <div className="flex gap-4">
+          <Link href="/dashboard/settings" className="text-sm text-blue-600">
+            Configurações
+          </Link>
+          <button onClick={handleLogout} className="text-sm text-blue-600">
+            Sair
+          </button>
+        </div>
       </div>
 
       <form onSubmit={handleCreate} className="mb-8 flex flex-wrap gap-2">
