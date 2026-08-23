@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.next/
+build/
+*.log
+.env
+.env.local
+.pgpass.local
+*.tsbuildinfo
+.DS_Store
+
+# Docs de skill auto-instaladas pelo `prisma init` para assistentes de IA — não é código do projeto
+**/.claude/skills/
+**/.windsurf/skills/
+**/.agents/skills/
+**/skills-lock.json

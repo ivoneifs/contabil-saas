@@ -1,0 +1,187 @@
+// Schema inicial do sistema SaaS para escritórios de contabilidade.
+// Multi-tenant via organizationId em cada tabela de domínio.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum MembershipRole {
+  ADMIN
+  CONTADOR
+  ASSISTENTE
+}
+
+enum RegimeTributario {
+  MEI
+  SIMPLES_NACIONAL
+  LUCRO_PRESUMIDO
+  LUCRO_REAL
+}
+
+enum NotaFiscalTipo {
+  NFE
+  NFCE
+}
+
+enum NotaFiscalStatus {
+  RASCUNHO
+  ENVIADA
+  AUTORIZADA
+  REJEITADA
+  CANCELADA
+}
+
+enum LancamentoTipo {
+  A_PAGAR
+  A_RECEBER
+}
+
+enum LancamentoStatus {
+  PENDENTE
+  PAGO
+  VENCIDO
+  CANCELADO
+}
+
+// Um escritório de contabilidade (tenant) usando o SaaS.
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  cnpj      String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships Membership[]
+  clients     Client[]
+
+  @@map("organizations")
+}
+
+// Um usuário que pode pertencer a uma ou mais organizações (escritórios).
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  memberships Membership[]
+
+  @@map("users")
+}
+
+// Vínculo usuário <-> organização com papel (multi-tenancy).
+model Membership {
+  id             String         @id @default(uuid())
+  role           MembershipRole @default(ASSISTENTE)
+  organizationId String
+  userId         String
+  createdAt      DateTime       @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@map("memberships")
+}
+
+// Empresa-cliente do escritório de contabilidade.
+model Client {
+  id               String            @id @default(uuid())
+  organizationId   String
+  razaoSocial      String
+  nomeFantasia     String?
+  cnpjCpf          String
+  regimeTributario RegimeTributario?
+  uf               String
+  municipio        String?
+  email            String?
+  telefone         String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  notasFiscais NotaFiscal[]
+  lancamentos  Lancamento[]
+  funcionarios Funcionario[]
+
+  @@unique([organizationId, cnpjCpf])
+  @@index([organizationId])
+  @@map("clients")
+}
+
+// Documento fiscal (NFe/NFCe) emitido via gateway fiscal (ex: Focus NFe).
+model NotaFiscal {
+  id                String           @id @default(uuid())
+  organizationId    String
+  clientId          String
+  tipo              NotaFiscalTipo
+  status            NotaFiscalStatus @default(RASCUNHO)
+  numero            String?
+  serie             String?
+  uf                String
+  chaveAcesso       String?
+  gatewayProvider   String? // ex: "focusnfe"
+  gatewayExternalId String? // id/referência da nota no gateway
+  xmlUrl            String?
+  danfeUrl          String?
+  valorTotal        Decimal          @db.Decimal(12, 2)
+  motivoRejeicao    String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([clientId])
+  @@map("notas_fiscais")
+}
+
+// Módulo Financeiro: contas a pagar/receber do cliente.
+model Lancamento {
+  id             String           @id @default(uuid())
+  organizationId String
+  clientId       String
+  tipo           LancamentoTipo
+  status         LancamentoStatus @default(PENDENTE)
+  descricao      String
+  valor          Decimal          @db.Decimal(12, 2)
+  vencimento     DateTime
+  pagoEm         DateTime?
+  boletoUrl      String? // quando emitido via Asaas
+  asaasChargeId  String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([clientId])
+  @@map("lancamentos")
+}
+
+// Módulo Pessoal: funcionários do cliente (base para folha de pagamento).
+model Funcionario {
+  id             String    @id @default(uuid())
+  organizationId String
+  clientId       String
+  nome           String
+  cpf            String
+  cargo          String?
+  salarioBase    Decimal   @db.Decimal(12, 2)
+  dataAdmissao   DateTime
+  dataDemissao   DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([clientId])
+  @@map("funcionarios")
+}
