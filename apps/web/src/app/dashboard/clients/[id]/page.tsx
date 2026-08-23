@@ -7,6 +7,8 @@ import { apiFetch } from '@/lib/api';
 import { FiscalSection } from './fiscal-section';
 import { FinanceiroSection } from './financeiro-section';
 import { PessoalSection } from './pessoal-section';
+import { AgendaSection } from './agenda-section';
+import { DocumentosSection } from './documentos-section';
 
 interface Client {
   id: string;
@@ -15,7 +17,7 @@ interface Client {
   uf: string;
 }
 
-const TABS = ['Fiscal', 'Financeiro', 'Pessoal'] as const;
+const TABS = ['Fiscal', 'Financeiro', 'Pessoal', 'Agenda', 'Documentos'] as const;
 type Tab = (typeof TABS)[number];
 
 export default function ClientDetailPage({ params }: { params: { id: string } }) {
@@ -70,6 +72,8 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
           {tab === 'Fiscal' && <FiscalSection clientId={client.id} />}
           {tab === 'Financeiro' && <FinanceiroSection clientId={client.id} />}
           {tab === 'Pessoal' && <PessoalSection clientId={client.id} />}
+          {tab === 'Agenda' && <AgendaSection clientId={client.id} />}
+          {tab === 'Documentos' && <DocumentosSection clientId={client.id} />}
         </>
       )}
     </main>

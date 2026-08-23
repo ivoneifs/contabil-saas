@@ -6,6 +6,8 @@ import { ClientsModule } from './clients/clients.module';
 import { FiscalModule } from './fiscal/fiscal.module';
 import { FinanceiroModule } from './financeiro/financeiro.module';
 import { PessoalModule } from './pessoal/pessoal.module';
+import { AgendaModule } from './agenda/agenda.module';
+import { DocumentosModule } from './documentos/documentos.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -17,6 +19,8 @@ import { AppController } from './app.controller';
     FiscalModule,
     FinanceiroModule,
     PessoalModule,
+    AgendaModule,
+    DocumentosModule,
   ],
   controllers: [AppController],
 })

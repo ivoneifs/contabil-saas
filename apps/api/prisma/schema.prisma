@@ -47,6 +47,18 @@ enum LancamentoStatus {
   CANCELADO
 }
 
+enum CompromissoStatus {
+  AGENDADO
+  REALIZADO
+  CANCELADO
+}
+
+enum DocumentoCategoria {
+  NOTA_FISCAL
+  EXTRATO_BANCARIO
+  OUTRO
+}
+
 // Um escritório de contabilidade (tenant) usando o SaaS.
 model Organization {
   id        String   @id @default(uuid())
@@ -109,6 +121,8 @@ model Client {
   notasFiscais NotaFiscal[]
   lancamentos  Lancamento[]
   funcionarios Funcionario[]
+  compromissos Compromisso[]
+  documentos   Documento[]
 
   @@unique([organizationId, cnpjCpf])
   @@index([organizationId])
@@ -184,4 +198,47 @@ model Funcionario {
   @@index([organizationId])
   @@index([clientId])
   @@map("funcionarios")
+}
+
+// Módulo Agenda: compromissos/reuniões com o cliente.
+model Compromisso {
+  id             String            @id @default(uuid())
+  organizationId String
+  clientId       String
+  titulo         String
+  descricao      String?
+  inicio         DateTime
+  fim            DateTime
+  status         CompromissoStatus @default(AGENDADO)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([clientId])
+  @@index([inicio])
+  @@map("compromissos")
+}
+
+// Documentos do cliente: notas fiscais, extratos bancários e outros arquivos.
+// Armazenados diretamente no banco (bytea) — adequado para o volume de um
+// escritório de contabilidade; se o volume crescer muito, trocar por um
+// object storage (S3-compatível) é uma migração isolada a este módulo.
+model Documento {
+  id             String             @id @default(uuid())
+  organizationId String
+  clientId       String
+  categoria      DocumentoCategoria @default(OUTRO)
+  nomeArquivo    String
+  mimeType       String
+  tamanhoBytes   Int
+  conteudo       Bytes
+  createdAt      DateTime           @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([clientId])
+  @@map("documentos")
 }
