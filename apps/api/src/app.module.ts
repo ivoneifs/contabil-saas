@@ -8,6 +8,7 @@ import { FinanceiroModule } from './financeiro/financeiro.module';
 import { PessoalModule } from './pessoal/pessoal.module';
 import { AgendaModule } from './agenda/agenda.module';
 import { DocumentosModule } from './documentos/documentos.module';
+import { AssistenteModule } from './assistente/assistente.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -21,6 +22,7 @@ import { AppController } from './app.controller';
     PessoalModule,
     AgendaModule,
     DocumentosModule,
+    AssistenteModule,
   ],
   controllers: [AppController],
 })

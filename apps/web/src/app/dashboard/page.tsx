@@ -109,6 +109,9 @@ export default function DashboardPage() {
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Clientes</h1>
         <div className="flex gap-4">
+          <Link href="/dashboard/assistente" className="text-sm text-blue-600">
+            Assistente
+          </Link>
           <Link href="/dashboard/settings" className="text-sm text-blue-600">
             Configurações
           </Link>
