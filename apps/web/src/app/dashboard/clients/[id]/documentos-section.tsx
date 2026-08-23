@@ -3,20 +3,111 @@
 import { useEffect, useRef, useState, FormEvent } from 'react';
 import { apiFetch } from '@/lib/api';
 
+type Categoria =
+  | 'NFE_ENTRADA'
+  | 'NFE_SAIDA'
+  | 'NFSE'
+  | 'NFCE'
+  | 'CTE'
+  | 'XML_NOTA_FISCAL'
+  | 'REDUCAO_Z_LEITURA_X'
+  | 'SPED'
+  | 'EXTRATO_BANCARIO'
+  | 'EXTRATO_APLICACAO'
+  | 'EXTRATO_CARTAO'
+  | 'COMPROVANTE_PAGAMENTO'
+  | 'CONTRATO_EMPRESTIMO'
+  | 'DUPLICATA_BOLETO'
+  | 'CONTROLE_RECEBIMENTO'
+  | 'FATURA_ENERGIA'
+  | 'FATURA_AGUA'
+  | 'FATURA_TELEFONIA_INTERNET'
+  | 'RECIBO_ALUGUEL'
+  | 'COMPROVANTE_CONDOMINIO_IPTU'
+  | 'FOLHA_PAGAMENTO'
+  | 'GUIA_FGTS'
+  | 'COMPROVANTE_PROLABORE'
+  | 'RECIBO_FERIAS_RESCISAO'
+  | 'RECIBO_AUTONOMO_RPA'
+  | 'GUIA_DAS'
+  | 'GUIA_DARF'
+  | 'GUIA_ISS_ICMS'
+  | 'CONTRATO_SOCIAL'
+  | 'OUTRO';
+
 interface Documento {
   id: string;
-  categoria: 'NOTA_FISCAL' | 'EXTRATO_BANCARIO' | 'OUTRO';
+  categoria: Categoria;
   nomeArquivo: string;
   mimeType: string;
   tamanhoBytes: number;
   createdAt: string;
 }
 
-const CATEGORIA_LABEL: Record<string, string> = {
-  NOTA_FISCAL: 'Nota fiscal',
+const CATEGORIA_LABEL: Record<Categoria, string> = {
+  NFE_ENTRADA: 'NF-e de entrada',
+  NFE_SAIDA: 'NF-e de saída',
+  NFSE: 'NFS-e (serviço)',
+  NFCE: 'NFC-e (consumidor)',
+  CTE: 'CT-e (transporte)',
+  XML_NOTA_FISCAL: 'XML da nota fiscal',
+  REDUCAO_Z_LEITURA_X: 'Redução Z / Leitura X',
+  SPED: 'Arquivo SPED',
   EXTRATO_BANCARIO: 'Extrato bancário',
+  EXTRATO_APLICACAO: 'Extrato de aplicação',
+  EXTRATO_CARTAO: 'Extrato de cartão',
+  COMPROVANTE_PAGAMENTO: 'Comprovante de pagamento',
+  CONTRATO_EMPRESTIMO: 'Contrato de empréstimo',
+  DUPLICATA_BOLETO: 'Duplicata/boleto pago',
+  CONTROLE_RECEBIMENTO: 'Controle de recebimento',
+  FATURA_ENERGIA: 'Fatura de energia',
+  FATURA_AGUA: 'Fatura de água',
+  FATURA_TELEFONIA_INTERNET: 'Fatura de telefonia/internet',
+  RECIBO_ALUGUEL: 'Recibo de aluguel',
+  COMPROVANTE_CONDOMINIO_IPTU: 'Condomínio/IPTU',
+  FOLHA_PAGAMENTO: 'Folha de pagamento',
+  GUIA_FGTS: 'Guia do FGTS',
+  COMPROVANTE_PROLABORE: 'Comprovante de pró-labore',
+  RECIBO_FERIAS_RESCISAO: 'Recibo de férias/rescisão',
+  RECIBO_AUTONOMO_RPA: 'RPA (autônomo)',
+  GUIA_DAS: 'Guia DAS',
+  GUIA_DARF: 'Guia DARF',
+  GUIA_ISS_ICMS: 'Guia ISS/ICMS',
+  CONTRATO_SOCIAL: 'Contrato social',
   OUTRO: 'Outro',
 };
+
+const CATEGORIA_GRUPOS: { grupo: string; categorias: Categoria[] }[] = [
+  {
+    grupo: 'Fiscais e de Operações',
+    categorias: ['NFE_ENTRADA', 'NFE_SAIDA', 'NFSE', 'NFCE', 'CTE', 'XML_NOTA_FISCAL', 'REDUCAO_Z_LEITURA_X', 'SPED'],
+  },
+  {
+    grupo: 'Financeiros e Bancários',
+    categorias: [
+      'EXTRATO_BANCARIO',
+      'EXTRATO_APLICACAO',
+      'EXTRATO_CARTAO',
+      'COMPROVANTE_PAGAMENTO',
+      'CONTRATO_EMPRESTIMO',
+      'DUPLICATA_BOLETO',
+      'CONTROLE_RECEBIMENTO',
+    ],
+  },
+  {
+    grupo: 'Despesas e Custos',
+    categorias: ['FATURA_ENERGIA', 'FATURA_AGUA', 'FATURA_TELEFONIA_INTERNET', 'RECIBO_ALUGUEL', 'COMPROVANTE_CONDOMINIO_IPTU'],
+  },
+  {
+    grupo: 'Trabalhistas e Previdenciários',
+    categorias: ['FOLHA_PAGAMENTO', 'GUIA_FGTS', 'COMPROVANTE_PROLABORE', 'RECIBO_FERIAS_RESCISAO', 'RECIBO_AUTONOMO_RPA'],
+  },
+  {
+    grupo: 'Tributários e Societários',
+    categorias: ['GUIA_DAS', 'GUIA_DARF', 'GUIA_ISS_ICMS', 'CONTRATO_SOCIAL'],
+  },
+  { grupo: 'Outros', categorias: ['OUTRO'] },
+];
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -26,7 +117,7 @@ function formatBytes(bytes: number) {
 
 export function DocumentosSection({ clientId }: { clientId: string }) {
   const [documentos, setDocumentos] = useState<Documento[]>([]);
-  const [categoria, setCategoria] = useState<'NOTA_FISCAL' | 'EXTRATO_BANCARIO' | 'OUTRO'>('NOTA_FISCAL');
+  const [categoria, setCategoria] = useState<Categoria>('NFE_ENTRADA');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -122,11 +213,17 @@ export function DocumentosSection({ clientId }: { clientId: string }) {
         <select
           className="rounded border px-3 py-2"
           value={categoria}
-          onChange={(e) => setCategoria(e.target.value as typeof categoria)}
+          onChange={(e) => setCategoria(e.target.value as Categoria)}
         >
-          <option value="NOTA_FISCAL">Nota fiscal</option>
-          <option value="EXTRATO_BANCARIO">Extrato bancário</option>
-          <option value="OUTRO">Outro</option>
+          {CATEGORIA_GRUPOS.map((g) => (
+            <optgroup key={g.grupo} label={g.grupo}>
+              {g.categorias.map((c) => (
+                <option key={c} value={c}>
+                  {CATEGORIA_LABEL[c]}
+                </option>
+              ))}
+            </optgroup>
+          ))}
         </select>
         <input ref={fileInputRef} type="file" className="rounded border px-3 py-2" required />
         <button

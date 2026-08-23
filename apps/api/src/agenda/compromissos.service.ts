@@ -31,6 +31,7 @@ export class CompromissosService {
     return this.prisma.compromisso.findMany({
       where: { organizationId, ...(clientId ? { clientId } : {}) },
       orderBy: { inicio: 'asc' },
+      include: { client: { select: { razaoSocial: true } } },
     });
   }
 

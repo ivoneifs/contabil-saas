@@ -47,6 +47,12 @@ enum LancamentoStatus {
   CANCELADO
 }
 
+enum ObrigacaoFiscalStatus {
+  PENDENTE
+  EM_ANALISE
+  ENTREGUE
+}
+
 enum CompromissoStatus {
   AGENDADO
   REALIZADO
@@ -54,8 +60,45 @@ enum CompromissoStatus {
 }
 
 enum DocumentoCategoria {
-  NOTA_FISCAL
+  // Fiscais e de Operações
+  NFE_ENTRADA
+  NFE_SAIDA
+  NFSE
+  NFCE
+  CTE
+  XML_NOTA_FISCAL
+  REDUCAO_Z_LEITURA_X
+  SPED
+
+  // Financeiros e Bancários
   EXTRATO_BANCARIO
+  EXTRATO_APLICACAO
+  EXTRATO_CARTAO
+  COMPROVANTE_PAGAMENTO
+  CONTRATO_EMPRESTIMO
+  DUPLICATA_BOLETO
+  CONTROLE_RECEBIMENTO
+
+  // Despesas e Custos
+  FATURA_ENERGIA
+  FATURA_AGUA
+  FATURA_TELEFONIA_INTERNET
+  RECIBO_ALUGUEL
+  COMPROVANTE_CONDOMINIO_IPTU
+
+  // Trabalhistas e Previdenciários
+  FOLHA_PAGAMENTO
+  GUIA_FGTS
+  COMPROVANTE_PROLABORE
+  RECIBO_FERIAS_RESCISAO
+  RECIBO_AUTONOMO_RPA
+
+  // Tributários e Societários
+  GUIA_DAS
+  GUIA_DARF
+  GUIA_ISS_ICMS
+  CONTRATO_SOCIAL
+
   OUTRO
 }
 
@@ -123,6 +166,7 @@ model Client {
   funcionarios Funcionario[]
   compromissos Compromisso[]
   documentos   Documento[]
+  obrigacoesFiscais ObrigacaoFiscal[]
 
   @@unique([organizationId, cnpjCpf])
   @@index([organizationId])
@@ -241,4 +285,24 @@ model Documento {
   @@index([organizationId])
   @@index([clientId])
   @@map("documentos")
+}
+
+// Módulo Kanban: obrigações fiscais recorrentes por cliente (ex: DAS, DEFIS,
+// declarações mensais), rastreadas por status até a entrega.
+model ObrigacaoFiscal {
+  id             String                @id @default(uuid())
+  organizationId String
+  clientId       String
+  titulo         String
+  competencia    String // ex: "2026-08" (mês/ano de referência)
+  prazo          DateTime
+  status         ObrigacaoFiscalStatus @default(PENDENTE)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([clientId])
+  @@map("obrigacoes_fiscais")
 }
