@@ -34,15 +34,20 @@ export class ModelosService {
     const modelo = MODELOS.find((m) => m.id === modeloId);
     if (!modelo) throw new NotFoundException('Modelo não encontrado.');
 
-    const [org, client] = await Promise.all([
+    const [org, client, contador] = await Promise.all([
       this.prisma.organization.findUnique({ where: { id: organizationId }, select: { name: true, cnpj: true } }),
-      clientId ? this.prisma.client.findFirst({ where: { id: clientId, organizationId } }) : null,
+      clientId ? this.prisma.client.findFirst({ where: { id: clientId, organizationId }, include: { contador: true } }) : null,
+      this.prisma.contador.findFirst({ where: { organizationId }, orderBy: [{ principal: 'desc' }, { createdAt: 'asc' }] }),
     ]);
+    const responsavel = client?.contador ?? contador;
     if (clientId && !client) throw new NotFoundException('Cliente não encontrado.');
 
     const dados = [
       `Documento: ${modelo.titulo} (categoria: ${modelo.categoria})`,
       `Escritório contábil: ${org?.name ?? '[NOME DO ESCRITÓRIO]'}${org?.cnpj ? `, CNPJ ${org.cnpj}` : ''}`,
+      responsavel
+        ? `Contador responsável: ${responsavel.nome}, CPF ${responsavel.cpf}, CRC-${responsavel.crcUf} ${responsavel.crcNumero}${responsavel.categoria === 'TECNICO' ? ' (técnico em contabilidade)' : ''}${responsavel.email ? `, e-mail ${responsavel.email}` : ''}`
+        : 'Contador responsável: [NOME DO CONTADOR], CRC [NÚMERO]',
       client
         ? `Cliente: ${client.razaoSocial}${client.nomeFantasia ? ` (${client.nomeFantasia})` : ''}, CNPJ/CPF ${client.cnpjCpf}, ` +
           `regime ${client.regimeTributario ? REGIME[client.regimeTributario] : '[REGIME]'}, ` +

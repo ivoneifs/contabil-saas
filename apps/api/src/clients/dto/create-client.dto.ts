@@ -27,4 +27,8 @@ export class CreateClientDto {
 
   @IsOptional()
   telefone?: string;
+
+  @IsOptional()
+  @IsString()
+  contadorId?: string;
 }

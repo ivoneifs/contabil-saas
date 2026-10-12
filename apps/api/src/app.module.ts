@@ -21,6 +21,7 @@ import { PlataformaModule } from './plataforma/plataforma.module';
 import { DocumentosFiscaisModule } from './documentos-fiscais/documentos-fiscais.module';
 import { EquipeModule } from './equipe/equipe.module';
 import { FolhaModule } from './folha/folha.module';
+import { ContadoresModule } from './contadores/contadores.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -47,6 +48,7 @@ import { AppController } from './app.controller';
     DocumentosFiscaisModule,
     EquipeModule,
     FolhaModule,
+    ContadoresModule,
   ],
   controllers: [AppController],
 })

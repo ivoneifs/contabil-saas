@@ -5,5 +5,6 @@ import { EquipeController } from './equipe.controller';
 @Module({
   providers: [EquipeService],
   controllers: [EquipeController],
+  exports: [EquipeService],
 })
 export class EquipeModule {}

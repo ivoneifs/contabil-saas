@@ -14,6 +14,7 @@ import {
   FileCode2,
   FilePenLine,
   FolderUp,
+  IdCard,
   UsersRound,
   FileSpreadsheet,
   FileText,
@@ -83,7 +84,8 @@ export const GRUPOS: GrupoModulos[] = [
     grupo: 'Cadastros',
     modulos: [
       { slug: 'clientes', perm: 'clientes.ver', titulo: 'Clientes', icone: Building2, href: '/dashboard/clients', etapa: 1, resumo: 'Empresas atendidas.' },
-      { slug: 'importar', perm: 'clientes.gerenciar', titulo: 'Importar clientes', icone: Upload, href: '/dashboard/importar', etapa: 1, resumo: 'Cadastro em lote por CNPJ.' },
+      { slug: 'contadores', perm: 'clientes.ver', titulo: 'Contadores (CRC)', icone: IdCard, href: '/dashboard/contadores', etapa: 1, resumo: 'Contadores do escritório, acesso ao sistema e carteira de clientes.' },
+      { slug: 'importar', perm: 'clientes.gerenciar', titulo: 'Importar clientes', icone: Upload, href: '/dashboard/importar', etapa: 1, resumo: 'Carteira do contador pelo CRC (Meus Clientes da Receita) ou lista de CPF/CNPJ.' },
       { slug: 'funcionarios', perm: 'pessoal', titulo: 'Funcionários', icone: Users, href: '/dashboard/funcionarios', etapa: 1, resumo: 'Funcionários de todos os clientes.' },
       { slug: 'documentos', perm: 'documentos', titulo: 'Documentos', icone: Paperclip, href: '/dashboard/documentos', etapa: 1, resumo: 'Arquivos de todos os clientes.' },
       { slug: 'certificados', perm: 'certificados', titulo: 'Certificados A1', icone: ShieldCheck, href: '/dashboard/certificados', etapa: 1, resumo: 'Cofre de certificados digitais.' },

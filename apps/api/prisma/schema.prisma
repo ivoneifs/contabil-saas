@@ -120,6 +120,7 @@ model Organization {
   clients     Client[]
   integracoes IntegracoesConfig?
   certificados CertificadoDigital[]
+  contadores   Contador[]
 
   @@map("organizations")
 }
@@ -159,6 +160,7 @@ model User {
   updatedAt    DateTime @updatedAt
 
   memberships Membership[]
+  contadores  Contador[]
 
   @@map("users")
 }
@@ -208,6 +210,9 @@ model Client {
   documentosFiscais DocumentoFiscal[]
   folhas            FolhaPagamento[]
   eventosEsocial    EventoEsocial[]
+  // Contador responsável por este cliente (carteira do contador).
+  contadorId        String?
+  contador          Contador? @relation(fields: [contadorId], references: [id], onDelete: SetNull)
 
   @@unique([organizationId, cnpjCpf])
   @@index([organizationId])
@@ -601,4 +606,36 @@ model EventoEsocial {
   @@unique([organizationId, chave])
   @@index([organizationId, status])
   @@map("eventos_esocial")
+}
+
+enum CategoriaCrc {
+  CONTADOR
+  TECNICO
+}
+
+// Profissional contábil do escritório, com registro no CRC. Os clientes
+// podem ser vinculados a um contador (carteira).
+model Contador {
+  id             String       @id @default(uuid())
+  organizationId String
+  nome           String
+  cpf            String
+  crcNumero      String
+  crcUf          String
+  categoria      CategoriaCrc @default(CONTADOR)
+  email          String?
+  telefone       String?
+  principal      Boolean      @default(false)
+  // Usuário de acesso ao sistema, liberado pelo administrador.
+  userId         String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  clientes     Client[]
+
+  @@unique([organizationId, cpf])
+  @@unique([organizationId, crcUf, crcNumero])
+  @@map("contadores")
 }

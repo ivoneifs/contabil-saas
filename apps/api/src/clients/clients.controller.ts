@@ -32,7 +32,8 @@ export class ClientsController {
   @Post('importar')
   @Requer('clientes.gerenciar')
   importar(@CurrentUser() user: JwtPayload, @Body() dto: ImportarClientesDto) {
-    return this.clientsService.importarCnpjs(user.organizationId, dto.cnpjs);
+    const itens = [...(dto.itens ?? []), ...(dto.cnpjs ?? []).map((documento) => ({ documento }))];
+    return this.clientsService.importar(user.organizationId, itens, dto.ufPadrao, dto.contadorId);
   }
 
   @Get()

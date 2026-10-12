@@ -2,10 +2,11 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { RegimeTributario } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConsultasService } from '../consultas/consultas.service';
+import { cnpjValido, cpfValido } from '../common/documentos';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 
-const MAX_IMPORTACAO = 100;
+const MAX_IMPORTACAO = 200;
 
 interface DadosCnpj {
   razao_social: string;
@@ -25,72 +26,84 @@ export class ClientsService {
     private readonly consultas: ConsultasService,
   ) {}
 
-  // Cadastra vários clientes de uma vez a partir de uma lista de CNPJs,
-  // preenchendo os dados pela Receita (BrasilAPI). CNPJs já cadastrados
-  // ou não encontrados voltam no relatório, sem interromper o lote.
-  async importarCnpjs(organizationId: string, entrada: string[]) {
-    const cnpjs = [...new Set(entrada.map((c) => c.replace(/\D/g, '')).filter(Boolean))];
-    if (!cnpjs.length) throw new BadRequestException('Informe ao menos um CNPJ.');
-    if (cnpjs.length > MAX_IMPORTACAO) {
-      throw new BadRequestException(`Importe no máximo ${MAX_IMPORTACAO} CNPJs por vez.`);
+  // Cadastra vários clientes de uma vez. CNPJ: dados preenchidos pela
+  // Receita (BrasilAPI). CPF: pessoa física com o nome informado (não existe
+  // consulta pública de CPF). Repetidos e inválidos voltam no relatório.
+  async importar(organizationId: string, entrada: { documento: string; nome?: string; uf?: string }[], ufPadrao = 'BA', contadorId?: string) {
+    if (contadorId && !(await this.prisma.contador.findFirst({ where: { id: contadorId, organizationId } }))) {
+      throw new BadRequestException('Contador não encontrado.');
     }
+    const vistos = new Set<string>();
+    const itens = entrada
+      .map((i) => ({ ...i, documento: i.documento.replace(/\D/g, ''), nome: i.nome?.trim() || undefined }))
+      .filter((i) => i.documento && !vistos.has(i.documento) && vistos.add(i.documento));
+    if (!itens.length) throw new BadRequestException('Informe ao menos um CPF ou CNPJ.');
+    if (itens.length > MAX_IMPORTACAO) throw new BadRequestException(`Importe no máximo ${MAX_IMPORTACAO} por vez.`);
 
     const existentes = new Set(
-      (
-        await this.prisma.client.findMany({
-          where: { organizationId, cnpjCpf: { in: cnpjs } },
-          select: { cnpjCpf: true },
-        })
-      ).map((c) => c.cnpjCpf),
+      (await this.prisma.client.findMany({ where: { organizationId, cnpjCpf: { in: itens.map((i) => i.documento) } }, select: { cnpjCpf: true } })).map((c) => c.cnpjCpf),
     );
 
-    const resultado: { cnpj: string; status: 'criado' | 'existente' | 'erro'; razaoSocial?: string; erro?: string }[] = [];
-    const fila = [...cnpjs];
-
+    const resultado: { documento: string; tipo: 'PJ' | 'PF' | '?'; status: 'criado' | 'existente' | 'erro'; razaoSocial?: string; erro?: string }[] = [];
+    const fila = [...itens];
     const worker = async () => {
-      for (let cnpj = fila.shift(); cnpj; cnpj = fila.shift()) {
-        if (cnpj.length !== 14) {
-          resultado.push({ cnpj, status: 'erro', erro: 'CNPJ deve ter 14 dígitos.' });
+      for (let item = fila.shift(); item; item = fila.shift()) {
+        const doc = item.documento;
+        const tipo = doc.length === 14 ? 'PJ' : doc.length === 11 ? 'PF' : '?';
+        if (tipo === '?') {
+          resultado.push({ documento: doc, tipo, status: 'erro', erro: 'Não é CPF (11 dígitos) nem CNPJ (14 dígitos).' });
           continue;
         }
-        if (existentes.has(cnpj)) {
-          resultado.push({ cnpj, status: 'existente' });
+        if (tipo === 'PJ' ? !cnpjValido(doc) : !cpfValido(doc)) {
+          resultado.push({ documento: doc, tipo, status: 'erro', erro: `${tipo === 'PJ' ? 'CNPJ' : 'CPF'} com dígito verificador inválido.` });
+          continue;
+        }
+        if (existentes.has(doc)) {
+          // Já cadastrado: só passa a constar na carteira do contador.
+          if (contadorId) await this.prisma.client.updateMany({ where: { organizationId, cnpjCpf: doc }, data: { contadorId } });
+          resultado.push({ documento: doc, tipo, status: 'existente' });
           continue;
         }
         try {
-          const d = (await this.consultas.cnpj(cnpj)) as DadosCnpj;
+          if (tipo === 'PF') {
+            if (!item.nome) throw new Error('Informe o nome da pessoa física.');
+            const c = await this.prisma.client.create({
+              data: { organizationId, contadorId, cnpjCpf: doc, razaoSocial: item.nome.toUpperCase(), uf: (item.uf || ufPadrao).toUpperCase().slice(0, 2) },
+            });
+            resultado.push({ documento: doc, tipo, status: 'criado', razaoSocial: c.razaoSocial });
+            continue;
+          }
+          const d = (await this.consultas.cnpj(doc)) as DadosCnpj;
           const client = await this.prisma.client.create({
             data: {
               organizationId,
-              cnpjCpf: cnpj,
+              contadorId,
+              cnpjCpf: doc,
               razaoSocial: d.razao_social,
               nomeFantasia: d.nome_fantasia || null,
               uf: d.uf,
               municipio: d.municipio || null,
               email: d.email?.toLowerCase() || null,
               telefone: d.ddd_telefone_1?.trim() || null,
-              regimeTributario: d.opcao_pelo_mei
-                ? RegimeTributario.MEI
-                : d.opcao_pelo_simples
-                  ? RegimeTributario.SIMPLES_NACIONAL
-                  : null,
+              regimeTributario: d.opcao_pelo_mei ? RegimeTributario.MEI : d.opcao_pelo_simples ? RegimeTributario.SIMPLES_NACIONAL : null,
             },
           });
-          resultado.push({ cnpj, status: 'criado', razaoSocial: client.razaoSocial });
+          resultado.push({ documento: doc, tipo, status: 'criado', razaoSocial: client.razaoSocial });
         } catch (err) {
-          resultado.push({ cnpj, status: 'erro', erro: err instanceof Error ? err.message : 'Falha ao consultar.' });
+          resultado.push({ documento: doc, tipo, status: 'erro', erro: err instanceof Error ? err.message : 'Falha ao importar.' });
         }
       }
     };
     // Poucas requisições em paralelo para não estourar o limite da BrasilAPI.
     await Promise.all(Array.from({ length: 3 }, worker));
 
-    return {
-      criados: resultado.filter((r) => r.status === 'criado').length,
-      existentes: resultado.filter((r) => r.status === 'existente').length,
-      erros: resultado.filter((r) => r.status === 'erro').length,
-      resultado,
-    };
+    const conta = (s: string) => resultado.filter((r) => r.status === s).length;
+    return { criados: conta('criado'), existentes: conta('existente'), erros: conta('erro'), resultado };
+  }
+
+  // Compatível com a importação antiga (só CNPJs).
+  importarCnpjs(organizationId: string, cnpjs: string[]) {
+    return this.importar(organizationId, cnpjs.map((documento) => ({ documento })));
   }
 
   create(organizationId: string, dto: CreateClientDto) {
@@ -102,6 +115,7 @@ export class ClientsService {
   findAll(organizationId: string) {
     return this.prisma.client.findMany({
       where: { organizationId },
+      include: { contador: { select: { id: true, nome: true, crcUf: true, crcNumero: true } } },
       orderBy: { razaoSocial: 'asc' },
     });
   }
