@@ -138,6 +138,8 @@ model IntegracoesConfig {
   serproConsumerSecret    String?
   nuvemFiscalClientId     String?
   nuvemFiscalClientSecret String?
+  // Último resultado do teste de cada integração: { [id]: { ok, mensagem, em, ms } }
+  testes                  Json?
   updatedAt      DateTime @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)

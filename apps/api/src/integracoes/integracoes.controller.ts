@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PermissoesGuard, Requer } from '../auth/permissoes.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -20,6 +20,18 @@ export class IntegracoesController {
   @Get('catalogo')
   catalogo(@CurrentUser() user: JwtPayload) {
     return this.integracoesService.catalogo(user.organizationId);
+  }
+
+  @Post('testar-todas')
+  @HttpCode(200)
+  testarTodas(@CurrentUser() user: JwtPayload) {
+    return this.integracoesService.testarTodas(user.organizationId);
+  }
+
+  @Post(':id/testar')
+  @HttpCode(200)
+  testar(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.integracoesService.testar(user.organizationId, id);
   }
 
   @Post()

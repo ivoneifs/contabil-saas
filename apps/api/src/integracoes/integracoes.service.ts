@@ -5,6 +5,10 @@ import { UpdateIntegracoesDto } from './dto/update-integracoes.dto';
 import { cifrarTexto, decifrarTexto, mascarar } from '../common/cofre';
 import { CONECTORES, ROTULO_REQUISITO, Requisito } from './catalogo';
 import { IaService } from '../ia/ia.service';
+import { ConsultasService } from '../consultas/consultas.service';
+import { CertificadosService } from '../certificados/certificados.service';
+import { ContextoTeste, ResultadoTeste, TESTADORES, executarTeste } from './testadores';
+import { Prisma } from '@prisma/client';
 
 function mascararCifrado(value: string | null | undefined): string | null {
   if (!value) return null;
@@ -21,7 +25,66 @@ export class IntegracoesService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly ia: IaService,
+    private readonly consultas: ConsultasService,
+    private readonly certificados: CertificadosService,
   ) {}
+
+  private async contexto(organizationId: string): Promise<ContextoTeste> {
+    const [config, certEscritorio, credIa, clienteComCert] = await Promise.all([
+      this.prisma.integracoesConfig.findUnique({ where: { organizationId } }),
+      this.certificados.obterParaUso(organizationId, null),
+      this.ia.credencial(),
+      this.prisma.certificadoDigital.findFirst({
+        where: { organizationId, clientId: { not: null }, validoAte: { gt: new Date() } },
+        select: { clientId: true },
+      }),
+    ]);
+    const certCliente = clienteComCert ? await this.certificados.obterParaUso(organizationId, clienteComCert.clientId) : null;
+    const dec = (v?: string | null) => (v ? decifrarTexto(v) : null);
+    const focusToken = config?.focusNfeToken ?? this.config.get<string>('FOCUS_NFE_TOKEN') ?? null;
+    return {
+      consultas: this.consultas,
+      focusNfe: focusToken ? { token: focusToken, baseUrl: config?.focusNfeBaseUrl ?? this.config.get<string>('FOCUS_NFE_BASE_URL') ?? '' } : null,
+      asaasKey: config?.asaasApiKey ?? null,
+      nuvemFiscal:
+        config?.nuvemFiscalClientId && config?.nuvemFiscalClientSecret
+          ? { clientId: dec(config.nuvemFiscalClientId)!, clientSecret: dec(config.nuvemFiscalClientSecret)! }
+          : null,
+      serpro:
+        config?.serproConsumerKey && config?.serproConsumerSecret
+          ? { consumerKey: dec(config.serproConsumerKey)!, consumerSecret: dec(config.serproConsumerSecret)! }
+          : null,
+      certEscritorio: certEscritorio ? { pfx: certEscritorio.pfx, senha: certEscritorio.senha, documento: certEscritorio.documento } : null,
+      certCliente: certCliente ? { pfx: certCliente.pfx, senha: certCliente.senha } : null,
+      iaConfigurada: credIa?.origem ?? null,
+    };
+  }
+
+  private async salvarTestes(organizationId: string, novos: Record<string, ResultadoTeste & { em: string }>) {
+    const atual = await this.prisma.integracoesConfig.findUnique({ where: { organizationId }, select: { testes: true } });
+    const testes = { ...((atual?.testes as Record<string, unknown>) ?? {}), ...novos } as Prisma.InputJsonValue;
+    await this.prisma.integracoesConfig.upsert({
+      where: { organizationId },
+      create: { organizationId, testes },
+      update: { testes },
+    });
+  }
+
+  async testar(organizationId: string, id: string) {
+    const r = { ...(await executarTeste(id, await this.contexto(organizationId))), em: new Date().toISOString() };
+    await this.salvarTestes(organizationId, { [id]: r });
+    return r;
+  }
+
+  // Verifica todas as integrações em paralelo (as gratuitas e as configuradas).
+  async testarTodas(organizationId: string) {
+    const ctx = await this.contexto(organizationId);
+    const ids = Object.keys(TESTADORES);
+    const resultados = await Promise.all(ids.map(async (id) => [id, { ...(await executarTeste(id, ctx)), em: new Date().toISOString() }] as const));
+    const mapa = Object.fromEntries(resultados);
+    await this.salvarTestes(organizationId, mapa);
+    return mapa;
+  }
 
   async get(organizationId: string) {
     const config = await this.prisma.integracoesConfig.findUnique({ where: { organizationId } });
@@ -77,10 +140,12 @@ export class IntegracoesService {
       ia: !!credIa,
     };
 
+    const testes = (config?.testes as unknown as Record<string, ResultadoTeste & { em: string }> | null) ?? {};
     return CONECTORES.map((c) => {
       const pendentes = c.requisitos.filter((r) => !atendido[r]);
       return {
         ...c,
+        teste: testes[c.id] ?? null,
         requisitos: c.requisitos.map((r) => ({ id: r, rotulo: ROTULO_REQUISITO[r], ok: atendido[r] })),
         status: pendentes.length === 0 ? 'CONECTADO' : 'AGUARDANDO_CREDENCIAL',
       };
