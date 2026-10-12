@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Calculator, ChevronDown, Crown, LogOut, Menu, Search, Settings, X } from 'lucide-react';
 import { clearToken, getIsSuperAdmin } from '@/lib/api';
 import { GRUPOS, TODOS_MODULOS, hrefDo } from '@/lib/modulos';
+import { usePlataforma } from '@/lib/usar-plataforma';
 
 const FUNDO = 'bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950';
 
@@ -15,27 +16,30 @@ function ativo(pathname: string, href: string) {
 }
 
 // Lê o e-mail e o papel do JWT guardado no login (só para exibição).
-function usuarioDoToken(): { email: string; role: string } {
+function usuarioDoToken(): { email: string; role: string; organizationId: string } {
   try {
     const token = window.localStorage.getItem('accessToken') ?? '';
     const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-    return { email: payload.email ?? '', role: payload.role ?? '' };
+    return { email: payload.email ?? '', role: payload.role ?? '', organizationId: payload.organizationId ?? '' };
   } catch {
-    return { email: '', role: '' };
+    return { email: '', role: '', organizationId: '' };
   }
 }
 
 const PAPEL: Record<string, string> = { ADMIN: 'Administrador', CONTADOR: 'Contador', ASSISTENTE: 'Assistente' };
 
-function Logo() {
+function Logo({ nome }: { nome: string }) {
+  const [marca, ...resto] = nome.split(' ');
+  const titulo = resto.length > 1 ? `${marca} ${resto[0]}` : marca;
+  const sub = resto.length > 1 ? resto.slice(1).join(' ') : resto.join(' ');
   return (
     <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-white/10 px-6">
       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/30">
         <Calculator size={16} />
       </div>
       <div className="leading-tight">
-        <span className="block font-semibold tracking-tight text-white">Genesis IA</span>
-        <span className="block text-[11px] text-white/45">Contabilidade</span>
+        <span className="block font-semibold tracking-tight text-white">{titulo}</span>
+        {sub && <span className="block text-[11px] text-white/45">{sub}</span>}
       </div>
     </div>
   );
@@ -122,8 +126,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [gaveta, setGaveta] = useState(false);
   const [menu, setMenu] = useState(false);
   const [superAdmin, setSuperAdmin] = useState(false);
-  const [usuario, setUsuario] = useState({ email: '', role: '' });
+  const [usuario, setUsuario] = useState({ email: '', role: '', organizationId: '' });
+  const [suporte, setSuporte] = useState<string | null>(null);
+  const [semEscritorio, setSemEscritorio] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const plataforma = usePlataforma();
 
   useEffect(() => {
     if (!window.localStorage.getItem('accessToken')) {
@@ -131,7 +138,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       return;
     }
     setSuperAdmin(getIsSuperAdmin());
-    setUsuario(usuarioDoToken());
+    const u = usuarioDoToken();
+    setUsuario(u);
+    setSemEscritorio(!u.organizationId);
+    setSuporte(window.localStorage.getItem('tokenSuperAdmin') ? window.localStorage.getItem('suporteEscritorio') : null);
     setPronto(true);
   }, [router]);
 
@@ -158,8 +168,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   function sair() {
     clearToken();
+    window.localStorage.removeItem('tokenSuperAdmin');
+    window.localStorage.removeItem('suporteEscritorio');
     router.push('/login');
   }
+
+  function voltarAoSuperAdmin() {
+    const token = window.localStorage.getItem('tokenSuperAdmin');
+    window.localStorage.removeItem('tokenSuperAdmin');
+    window.localStorage.removeItem('suporteEscritorio');
+    if (token) window.localStorage.setItem('accessToken', token);
+    window.location.href = '/dashboard/admin';
+  }
+
+  // Super Admin sem escritório próprio só tem a área da plataforma.
+  useEffect(() => {
+    if (pronto && semEscritorio && superAdmin && !pathname.startsWith('/dashboard/admin')) {
+      router.replace('/dashboard/admin');
+    }
+  }, [pronto, semEscritorio, superAdmin, pathname, router]);
 
   if (!pronto) return <div className="min-h-screen bg-slate-50" />;
 
@@ -169,7 +196,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900">
       <aside className={`sticky top-0 hidden h-screen w-64 shrink-0 flex-col md:flex ${FUNDO}`}>
-        <Logo />
+        <Logo nome={plataforma.nomeSistema} />
         <Navegacao superAdmin={superAdmin} />
       </aside>
 
@@ -185,13 +212,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             >
               <X size={18} />
             </button>
-            <Logo />
+            <Logo nome={plataforma.nomeSistema} />
             <Navegacao superAdmin={superAdmin} onNavegar={() => setGaveta(false)} />
           </aside>
         </div>
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
+        {suporte && (
+          <div className="flex flex-wrap items-center justify-center gap-3 bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-sm text-white">
+            <span>
+              Modo suporte: você está no painel de <b>{suporte}</b>.
+            </span>
+            <button onClick={voltarAoSuperAdmin} className="rounded-md bg-white/15 px-3 py-1 font-medium hover:bg-white/25">
+              Voltar ao Super Admin
+            </button>
+          </div>
+        )}
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-slate-200/80 bg-white/80 px-4 backdrop-blur lg:px-8">
           <div className="flex min-w-0 items-center gap-2">
             <button
@@ -203,7 +240,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Menu size={20} />
             </button>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-slate-800">{atual?.titulo ?? 'Genesis IA Contabilidade'}</p>
+              <p className="truncate text-sm font-semibold text-slate-800">{atual?.titulo ?? plataforma.nomeSistema}</p>
               {atual && <p className="hidden truncate text-xs text-slate-500 sm:block">{atual.resumo}</p>}
             </div>
           </div>

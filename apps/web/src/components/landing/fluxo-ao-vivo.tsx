@@ -41,16 +41,16 @@ export default function FluxoAoVivo() {
 
   return (
     <div className="relative">
-      <div className="absolute -inset-10 bg-[radial-gradient(closest-side,rgba(109,106,254,0.35),transparent)] blur-2xl" />
-      <div className="relative overflow-hidden rounded-[22px] border border-white/10 bg-[#0b0d14]/90 shadow-[0_40px_120px_-20px_rgba(109,106,254,0.45)] backdrop-blur-xl">
+      <div className="absolute -inset-10 bg-[radial-gradient(closest-side,rgb(var(--brand-500)/0.35),transparent)] blur-2xl" />
+      <div className="relative overflow-hidden rounded-[22px] border border-white/10 bg-[#0b0d14]/90 shadow-[0_40px_120px_-20px_rgb(var(--brand-500)/0.45)] backdrop-blur-xl">
         <div className="flex h-11 items-center justify-between border-b border-white/[0.06] px-5 font-mono text-[11px] uppercase tracking-[0.18em] text-white/40">
           <span className="flex items-center gap-2">
-            <span className="lp-pulse h-2 w-2 rounded-full bg-[#c8ff4d]" /> ao vivo
+            <span className="lp-pulse h-2 w-2 rounded-full bg-[rgb(var(--signal))]" /> ao vivo
           </span>
           <span>escritório no automático</span>
         </div>
         <div className="relative space-y-3 p-5">
-          <div className="lp-scan pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#6d6afe]/15 to-transparent" />
+          <div className="lp-scan pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[rgb(var(--brand-500)/0.15)] to-transparent" />
           {ETAPAS.map((e, i) => {
             const feito = i < ativo;
             const agora = i === ativo;
@@ -59,7 +59,7 @@ export default function FluxoAoVivo() {
                 key={e.rotulo}
                 className={`relative flex gap-4 rounded-2xl border p-4 transition-all duration-500 ${
                   agora
-                    ? 'translate-x-1 border-[#6d6afe]/60 bg-[#6d6afe]/[0.08]'
+                    ? 'translate-x-1 border-[rgb(var(--brand-500)/0.6)] bg-[rgb(var(--brand-500)/0.08)]'
                     : feito
                       ? 'border-white/[0.07] bg-white/[0.02]'
                       : 'border-white/[0.04] bg-transparent opacity-40'
@@ -67,7 +67,7 @@ export default function FluxoAoVivo() {
               >
                 <div
                   className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${
-                    feito ? 'bg-[#c8ff4d] text-black' : agora ? 'bg-[#6d6afe] text-white' : 'bg-white/5 text-white/50'
+                    feito ? 'bg-[rgb(var(--signal))] text-[rgb(var(--signal-ink))]' : agora ? 'bg-[rgb(var(--brand-500))] text-white' : 'bg-white/5 text-white/50'
                   }`}
                 >
                   {feito ? <Check size={18} strokeWidth={3} /> : <e.icon size={18} />}

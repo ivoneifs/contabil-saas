@@ -1,7 +1,11 @@
+'use client';
+
 import { Calculator, CalendarClock, FilePenLine, Landmark, ShieldCheck } from 'lucide-react';
+import { usePlataforma } from '@/lib/usar-plataforma';
 
 // Moldura das telas de login e cadastro.
 export default function AuthShell({ children }: { children: React.ReactNode }) {
+  const { nomeSistema } = usePlataforma();
   return (
     <div className="grid min-h-screen w-full bg-white text-slate-900 lg:grid-cols-2">
       <div className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-slate-950 via-indigo-950 to-violet-900 p-12 text-white lg:flex">
@@ -13,7 +17,7 @@ export default function AuthShell({ children }: { children: React.ReactNode }) {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 shadow-lg shadow-indigo-500/40">
             <Calculator size={20} />
           </div>
-          <span className="text-xl font-semibold tracking-tight">Genesis IA Contabilidade</span>
+          <span className="text-xl font-semibold tracking-tight">{nomeSistema}</span>
         </div>
 
         <div className="relative space-y-6">
@@ -37,7 +41,7 @@ export default function AuthShell({ children }: { children: React.ReactNode }) {
           </ul>
         </div>
 
-        <p className="relative text-sm text-white/40">© {new Date().getFullYear()} Genesis IA · Contabilidade inteligente</p>
+        <p className="relative text-sm text-white/40">© {new Date().getFullYear()} {nomeSistema}</p>
       </div>
 
       <div className="flex items-center justify-center p-6 sm:p-8">
@@ -46,7 +50,7 @@ export default function AuthShell({ children }: { children: React.ReactNode }) {
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white">
               <Calculator size={18} />
             </div>
-            <span className="text-lg font-semibold">Genesis IA Contabilidade</span>
+            <span className="text-lg font-semibold">{nomeSistema}</span>
           </div>
           {children}
         </div>

@@ -10,7 +10,7 @@ export type Requisito =
   | 'serpro'
   | 'certificadoEscritorio'
   | 'certificadoCliente'
-  | 'openai';
+  | 'ia';
 
 export interface ConectorDef {
   id: string;
@@ -172,15 +172,15 @@ export const CONECTORES: ConectorDef[] = [
     site: 'https://www.asaas.com',
   },
   {
-    id: 'openai',
-    nome: 'Assistente de IA',
-    orgao: 'OpenAI',
+    id: 'ia',
+    nome: 'Inteligência artificial',
+    orgao: 'Anthropic (Claude) ou OpenAI',
     categoria: 'Inteligência',
-    descricao: 'Assistente no painel para dúvidas, redação e organização.',
-    servicos: ['Assistente IA'],
-    requisitos: ['openai'],
+    descricao: 'Assistente, plano da semana e modelos de documentos. A chave é cadastrada pelo Super Admin.',
+    servicos: ['Assistente IA', 'Plano da semana', '200 modelos com IA'],
+    requisitos: ['ia'],
     etapa: 1,
-    site: 'https://platform.openai.com',
+    site: 'https://www.anthropic.com',
   },
 ];
 
@@ -192,5 +192,5 @@ export const ROTULO_REQUISITO: Record<Requisito, string> = {
   serpro: 'Consumer Key e Secret do SERPRO',
   certificadoEscritorio: 'Certificado A1 do escritório',
   certificadoCliente: 'Certificado A1 do cliente',
-  openai: 'Chave da OpenAI (plataforma)',
+  ia: 'Chave de IA cadastrada pelo Super Admin',
 };

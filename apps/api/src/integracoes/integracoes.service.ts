@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { UpdateIntegracoesDto } from './dto/update-integracoes.dto';
 import { cifrarTexto, decifrarTexto, mascarar } from '../common/cofre';
 import { CONECTORES, ROTULO_REQUISITO, Requisito } from './catalogo';
+import { IaService } from '../ia/ia.service';
 
 function mascararCifrado(value: string | null | undefined): string | null {
   if (!value) return null;
@@ -19,6 +20,7 @@ export class IntegracoesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly ia: IaService,
   ) {}
 
   async get(organizationId: string) {
@@ -57,10 +59,11 @@ export class IntegracoesService {
 
   async catalogo(organizationId: string) {
     const agora = new Date();
-    const [config, certEscritorio, certClientes] = await Promise.all([
+    const [config, certEscritorio, certClientes, credIa] = await Promise.all([
       this.prisma.integracoesConfig.findUnique({ where: { organizationId } }),
       this.prisma.certificadoDigital.count({ where: { organizationId, clientId: null, validoAte: { gt: agora } } }),
       this.prisma.certificadoDigital.count({ where: { organizationId, clientId: { not: null }, validoAte: { gt: agora } } }),
+      this.ia.credencial(),
     ]);
 
     const atendido: Record<Requisito, boolean> = {
@@ -71,7 +74,7 @@ export class IntegracoesService {
       serpro: !!(config?.serproConsumerKey && config?.serproConsumerSecret),
       certificadoEscritorio: certEscritorio > 0,
       certificadoCliente: certClientes > 0,
-      openai: !!this.config.get<string>('OPENAI_API_KEY'),
+      ia: !!credIa,
     };
 
     return CONECTORES.map((c) => {

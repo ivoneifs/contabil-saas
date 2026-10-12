@@ -97,9 +97,12 @@ export default function LoginPage() {
           {loading ? 'Entrando...' : 'Entrar'}
         </button>
       </form>
-      <a href="/signup" className="block text-center text-sm font-medium text-indigo-600 hover:text-indigo-700">
-        Criar um escritório novo
-      </a>
+      <p className="text-center text-sm text-slate-500">
+        Ainda não é cliente?{' '}
+        <a href="/#planos" className="font-medium text-indigo-600 hover:text-indigo-700">
+          Conheça o plano
+        </a>
+      </p>
     </AuthShell>
   );
 }

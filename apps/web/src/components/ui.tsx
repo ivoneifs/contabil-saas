@@ -121,3 +121,49 @@ export function formatarDoc(doc: string) {
   if (d.length === 11) return d.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
   return doc;
 }
+
+export function Modal({
+  aberto,
+  titulo,
+  onFechar,
+  children,
+  largura = 'max-w-lg',
+}: {
+  aberto: boolean;
+  titulo: string;
+  onFechar: () => void;
+  children: React.ReactNode;
+  largura?: string;
+}) {
+  useEffect(() => {
+    if (!aberto) return;
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && onFechar();
+    document.addEventListener('keydown', esc);
+    return () => document.removeEventListener('keydown', esc);
+  }, [aberto, onFechar]);
+
+  if (!aberto) return null;
+  return (
+    <div className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto bg-slate-950/50 p-4 backdrop-blur-sm sm:items-center" onMouseDown={onFechar}>
+      <div className={`w-full ${largura} rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200`} onMouseDown={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={titulo}>
+        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+          <h2 className="text-lg font-semibold">{titulo}</h2>
+          <button onClick={onFechar} aria-label="Fechar" className="rounded-lg px-2 py-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+            ✕
+          </button>
+        </div>
+        <div className="px-6 py-5">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+export function Campo({ rotulo, children, dica }: { rotulo: string; children: React.ReactNode; dica?: string }) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-sm font-medium text-slate-700">{rotulo}</span>
+      {children}
+      {dica && <span className="mt-1 block text-xs text-slate-500">{dica}</span>}
+    </label>
+  );
+}

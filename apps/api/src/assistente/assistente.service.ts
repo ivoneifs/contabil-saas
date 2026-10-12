@@ -1,10 +1,9 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import OpenAI from 'openai';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { IaService } from '../ia/ia.service';
 import { ChatDto } from './dto/chat.dto';
 
-const SYSTEM_PROMPT = `Você é o assistente de IA de um sistema de gestão para escritórios de contabilidade (contabil-saas).
+const SYSTEM_PROMPT = `Você é o assistente de IA de um sistema de gestão para escritórios de contabilidade (Genesis IA Contabilidade).
 Ajude o contador com dúvidas sobre os módulos do sistema (Clientes, Fiscal, Financeiro, Pessoal, Agenda, Documentos),
 sobre contabilidade em geral (regimes tributários, obrigações fiscais, prazos) e sobre como usar o próprio sistema.
 
@@ -17,43 +16,18 @@ Regras:
 
 @Injectable()
 export class AssistenteService {
-  private client: OpenAI | null = null;
-
   constructor(
-    private readonly config: ConfigService,
+    private readonly ia: IaService,
     private readonly prisma: PrismaService,
   ) {}
 
-  private getClient(): OpenAI {
-    if (!this.client) {
-      const apiKey = this.config.get<string>('OPENAI_API_KEY');
-      if (!apiKey) {
-        throw new ServiceUnavailableException(
-          'Assistente de IA não configurado. Defina OPENAI_API_KEY.',
-        );
-      }
-      this.client = new OpenAI({ apiKey });
-    }
-    return this.client;
-  }
-
   // Uma chamada simples (system + user) para os módulos que usam IA
   // (agenda inteligente, modelos de documentos).
-  async completar(system: string, user: string, opcoes: { json?: boolean } = {}): Promise<string> {
-    const completion = await this.getClient().chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: user },
-      ],
-      ...(opcoes.json ? { response_format: { type: 'json_object' as const } } : {}),
-    });
-    return completion.choices[0]?.message?.content ?? '';
+  completar(system: string, user: string, opcoes: { json?: boolean } = {}): Promise<string> {
+    return this.ia.gerar(system, [{ role: 'user', content: user }], opcoes);
   }
 
   async chat(organizationId: string, dto: ChatDto): Promise<{ reply: string }> {
-    const openai = this.getClient();
-
     let contextoCliente = '';
     if (dto.clientId) {
       const client = await this.prisma.client.findFirst({
@@ -64,15 +38,10 @@ export class AssistenteService {
       }
     }
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT + contextoCliente },
-        ...dto.messages.map((m) => ({ role: m.role, content: m.content })),
-      ],
-    });
-
-    const reply = completion.choices[0]?.message?.content ?? '';
+    const reply = await this.ia.gerar(
+      SYSTEM_PROMPT + contextoCliente,
+      dto.messages.map((m) => ({ role: m.role, content: m.content })),
+    );
     return { reply };
   }
 }

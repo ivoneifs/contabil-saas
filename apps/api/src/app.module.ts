@@ -16,12 +16,15 @@ import { ConsultasModule } from './consultas/consultas.module';
 import { PainelModule } from './painel/painel.module';
 import { AgendaInteligenteModule } from './agenda-inteligente/agenda-inteligente.module';
 import { ModelosModule } from './modelos/modelos.module';
+import { IaModule } from './ia/ia.module';
+import { PlataformaModule } from './plataforma/plataforma.module';
 import { AppController } from './app.controller';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
+    IaModule,
     AuthModule,
     ClientsModule,
     FiscalModule,
@@ -37,6 +40,7 @@ import { AppController } from './app.controller';
     PainelModule,
     AgendaInteligenteModule,
     ModelosModule,
+    PlataformaModule,
   ],
   controllers: [AppController],
 })

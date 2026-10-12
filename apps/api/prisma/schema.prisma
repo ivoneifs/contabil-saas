@@ -107,6 +107,12 @@ model Organization {
   id        String   @id @default(uuid())
   name      String
   cnpj      String?  @unique
+  // Controle de venda/licença, gerenciado pelo Super Admin.
+  ativa       Boolean   @default(true)
+  acessoAte   DateTime?
+  plano       String?
+  telefone    String?
+  observacoes String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -143,6 +149,7 @@ model IntegracoesConfig {
 model User {
   id            String   @id @default(uuid())
   isSuperAdmin  Boolean  @default(false)
+  ativo         Boolean  @default(true)
   email        String   @unique
   passwordHash String
   name         String
@@ -355,4 +362,47 @@ model CertificadoDigital {
   @@index([organizationId])
   @@index([clientId])
   @@map("certificados_digitais")
+}
+
+enum ProvedorIa {
+  OPENAI
+  ANTHROPIC
+}
+
+// Chaves de API de IA da plataforma, gerenciadas pelo Super Admin.
+// A chave fica cifrada (src/common/cofre.ts); "final" guarda só os 4 últimos
+// caracteres para exibição. A chave marcada como padrão (e ativa) é a usada
+// pelo assistente, pela agenda inteligente e pelos modelos.
+model ChaveIa {
+  id           String     @id @default(uuid())
+  provedor     ProvedorIa
+  nome         String
+  chaveCifrada String
+  final        String
+  modelo       String?
+  ativa        Boolean    @default(true)
+  padrao       Boolean    @default(false)
+  ultimoTeste  DateTime?
+  ultimoErro   String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@map("chaves_ia")
+}
+
+// Aparência e dados comerciais da plataforma (uma linha só, id "plataforma"),
+// editados pelo Super Admin. Cores em hexadecimal (#rrggbb).
+model ConfiguracaoPlataforma {
+  id            String   @id @default("plataforma")
+  nomeSistema   String   @default("Genesis IA Contabilidade")
+  corPrimaria   String   @default("#6366f1")
+  corSecundaria String   @default("#8b5cf6")
+  corDestaque   String   @default("#c8ff4d")
+  whatsapp      String   @default("5574988258825")
+  precoAVista   Int      @default(4000)
+  parcelas      Int      @default(10)
+  valorParcela  Int      @default(500)
+  updatedAt     DateTime @updatedAt
+
+  @@map("configuracao_plataforma")
 }

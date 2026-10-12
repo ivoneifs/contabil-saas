@@ -1,64 +1,68 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { apiFetch } from '@/lib/api';
+import { useState } from 'react';
+import { Building2, KeyRound, Palette, ShieldCheck } from 'lucide-react';
+import { Indicador, Titulo, useApi } from '@/components/ui';
+import Escritorios from './escritorios';
+import ChavesIa from './chaves-ia';
+import Aparencia from './aparencia';
 
-interface OrgRow {
-  id: string;
-  name: string;
-  createdAt: string;
-  totalClientes: number;
-  totalUsuarios: number;
-  adminEmail: string | null;
-  adminNome: string | null;
+interface Resumo {
+  escritorios: number;
+  ativos: number;
+  bloqueados: number;
+  vencendo: number;
+  usuarios: number;
+  clientes: number;
 }
 
-export default function AdminPage() {
-  const [orgs, setOrgs] = useState<OrgRow[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+const ABAS = [
+  { id: 'escritorios', titulo: 'Escritórios e usuários', icone: Building2 },
+  { id: 'ia', titulo: 'Chaves de IA', icone: KeyRound },
+  { id: 'aparencia', titulo: 'Aparência', icone: Palette },
+] as const;
 
-  useEffect(() => {
-    apiFetch<OrgRow[]>('/admin/organizations')
-      .then(setOrgs)
-      .catch((err) => setError(err instanceof Error ? err.message : 'Erro ao carregar organizações.'))
-      .finally(() => setLoading(false));
-  }, []);
+export default function SuperAdminPage() {
+  const [aba, setAba] = useState<(typeof ABAS)[number]['id']>('escritorios');
+  const { dados: r, recarregar } = useApi<Resumo>('/admin/resumo');
 
   return (
-    <main className="mx-auto max-w-4xl">
-      <h1 className="mt-2 mb-6 text-2xl font-semibold">Super Admin · Escritórios na plataforma</h1>
+    <main className="mx-auto max-w-7xl">
+      <Titulo
+        titulo="Super Admin"
+        subtitulo="Controle total da plataforma: escritórios vendidos, usuários, licenças, IA e aparência."
+        acoes={
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700">
+            <ShieldCheck size={14} /> Acesso total
+          </span>
+        }
+      />
 
-      {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <Indicador rotulo="Escritórios" valor={r?.escritorios ?? '–'} detalhe={`${r?.usuarios ?? 0} usuários`} />
+        <Indicador rotulo="Ativos" valor={r?.ativos ?? '–'} tom="green" />
+        <Indicador rotulo="Vencem em 30 dias" valor={r?.vencendo ?? '–'} tom="amber" />
+        <Indicador rotulo="Bloqueados ou vencidos" valor={r?.bloqueados ?? '–'} tom="red" />
+        <Indicador rotulo="Clientes na plataforma" valor={r?.clientes ?? '–'} tom="indigo" />
+      </div>
 
-      {loading ? (
-        <p>Carregando...</p>
-      ) : (
-        <table className="w-full border-collapse text-left text-sm">
-          <thead>
-            <tr className="border-b">
-              <th className="py-2">Escritório</th>
-              <th className="py-2">Admin</th>
-              <th className="py-2">Clientes</th>
-              <th className="py-2">Usuários</th>
-              <th className="py-2">Criado em</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orgs.map((o) => (
-              <tr key={o.id} className="border-b">
-                <td className="py-2">{o.name}</td>
-                <td className="py-2">
-                  {o.adminNome ?? '—'} {o.adminEmail && <span className="text-gray-400">({o.adminEmail})</span>}
-                </td>
-                <td className="py-2">{o.totalClientes}</td>
-                <td className="py-2">{o.totalUsuarios}</td>
-                <td className="py-2">{new Date(o.createdAt).toLocaleDateString('pt-BR')}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <div className="mb-6 flex gap-1 overflow-x-auto rounded-xl bg-slate-100 p-1">
+        {ABAS.map(({ id, titulo, icone: Icone }) => (
+          <button
+            key={id}
+            onClick={() => setAba(id)}
+            className={`flex shrink-0 items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition ${
+              aba === id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Icone size={16} /> {titulo}
+          </button>
+        ))}
+      </div>
+
+      {aba === 'escritorios' && <Escritorios onMudou={recarregar} />}
+      {aba === 'ia' && <ChavesIa />}
+      {aba === 'aparencia' && <Aparencia />}
     </main>
   );
 }
