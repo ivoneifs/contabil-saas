@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import { Botao, Campo, Erro, campo } from '@/components/ui';
 
@@ -39,6 +39,18 @@ export default function ClienteForm({ inicial, onSalvo }: { inicial: Cliente | n
   });
   const [erro, setErro] = useState<string | null>(null);
   const [buscando, setBuscando] = useState(false);
+  const [municipios, setMunicipios] = useState<{ codigoIbge: string; nome: string }[]>([]);
+
+  // Lista oficial do IBGE para sugerir o município (grafia igual à da NF-e).
+  useEffect(() => {
+    let ativo = true;
+    apiFetch<{ codigoIbge: string; nome: string }[]>(`/consultas/municipios/${f.uf}`)
+      .then((l) => ativo && setMunicipios(l))
+      .catch(() => ativo && setMunicipios([]));
+    return () => {
+      ativo = false;
+    };
+  }, [f.uf]);
   const [salvando, setSalvando] = useState(false);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF((v) => ({ ...v, [k]: e.target.value }));
 
@@ -144,7 +156,14 @@ export default function ClienteForm({ inicial, onSalvo }: { inicial: Cliente | n
             </select>
           </Campo>
           <Campo rotulo="Município">
-            <input className={campo} value={f.municipio} onChange={set('municipio')} />
+            <input className={campo} value={f.municipio} onChange={set('municipio')} list="municipios-ibge" autoComplete="off" />
+            <datalist id="municipios-ibge">
+              {municipios.map((m) => (
+                <option key={m.codigoIbge} value={m.nome}>
+                  IBGE {m.codigoIbge}
+                </option>
+              ))}
+            </datalist>
           </Campo>
         </div>
         <Campo rotulo="E-mail">

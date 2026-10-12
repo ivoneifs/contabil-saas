@@ -37,14 +37,59 @@ function Barras({ valores }: { valores: Indice['valores'] }) {
   );
 }
 
+interface Cambio {
+  moeda: 'USD' | 'EUR';
+  ultimo: { data: string; compra: number; venda: number } | null;
+  valores: { data: string; compra: number; venda: number }[];
+  erro: string | null;
+}
+
+const NOME_MOEDA = { USD: 'Dólar americano', EUR: 'Euro' };
+const reais4 = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}`;
+
 export default function IndicesPage() {
   const { dados, erro, carregando } = useApi<Indice[]>('/consultas/indices');
+  const { dados: cambio } = useApi<Cambio[]>('/consultas/cambio');
 
   return (
     <main className="mx-auto max-w-7xl">
-      <Titulo titulo="Índices econômicos" subtitulo="Séries oficiais do Banco Central (SGS). Variação mensal dos últimos 12 meses fechados e acumulado no período." />
+      <Titulo titulo="Índices econômicos" subtitulo="Câmbio PTAX e séries oficiais do Banco Central (SGS): variação mensal dos últimos 12 meses fechados e acumulado no período." />
       <Erro msg={erro} />
       {carregando && <p className="text-sm text-slate-500">Consultando o Banco Central…</p>}
+      <div className="mb-6 grid gap-4 md:grid-cols-2">
+        {cambio?.map((c) => {
+          const primeiro = c.valores[0]?.venda;
+          const variacao = c.ultimo && primeiro ? ((c.ultimo.venda - primeiro) / primeiro) * 100 : null;
+          return (
+            <Card key={c.moeda}>
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="text-lg font-semibold">{c.moeda} · PTAX</p>
+                  <p className="text-xs text-slate-500">{NOME_MOEDA[c.moeda]} · fechamento do Banco Central</p>
+                </div>
+                {c.ultimo && (
+                  <div className="text-right">
+                    <p className="text-xl font-semibold tabular-nums">{reais4(c.ultimo.venda)}</p>
+                    <p className="text-xs text-slate-500">
+                      venda em {c.ultimo.data.split('-').reverse().join('/')} · compra {reais4(c.ultimo.compra)}
+                    </p>
+                  </div>
+                )}
+              </div>
+              {c.erro ? (
+                <p className="mt-3 text-sm text-rose-600">{c.erro}</p>
+              ) : (
+                variacao !== null && (
+                  <p className={`mt-3 text-sm ${variacao >= 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                    {variacao >= 0 ? '▲' : '▼'} {Math.abs(variacao).toFixed(2)}% em 30 dias
+                  </p>
+                )
+              )}
+            </Card>
+          );
+        })}
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {dados?.map((i) => (
           <Card key={i.codigo}>

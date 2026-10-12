@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Card, Erro, Indicador, Selo, Titulo, Vazio, brl, dataBR, useApi } from '@/components/ui';
+import StatusSefaz from '@/components/status-sefaz';
 
 interface Resumo {
   clientes: number;
@@ -20,12 +21,13 @@ interface Conector {
   id: string;
   nome: string;
   status: 'CONECTADO' | 'AGUARDANDO_CREDENCIAL';
+  teste: { ok: boolean } | null;
 }
 
 export default function PainelPage() {
   const { dados: r, erro } = useApi<Resumo>('/painel/resumo');
   const { dados: conectores } = useApi<Conector[]>('/integracoes/catalogo');
-  const conectados = conectores?.filter((c) => c.status === 'CONECTADO').length ?? 0;
+  const conectados = conectores?.filter((c) => c.teste?.ok).length ?? 0;
   const hoje = new Date();
 
   return (
@@ -94,7 +96,17 @@ export default function PainelPage() {
               {conectados}
               <span className="text-base font-normal text-slate-400">/{conectores?.length ?? 0}</span>
             </p>
-            <p className="text-xs text-slate-500">conectadas aos órgãos e serviços</p>
+            <p className="text-xs text-slate-500">funcionando (verificadas automaticamente)</p>
+          </Card>
+
+          <Card>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="font-semibold">SEFAZ agora</h2>
+              <Link href="/dashboard/consultas" className="text-sm text-indigo-700 hover:underline">
+                Detalhes →
+              </Link>
+            </div>
+            <StatusSefaz compacto />
           </Card>
 
           <Card>

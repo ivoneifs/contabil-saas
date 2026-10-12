@@ -3,6 +3,7 @@
 import { FormEvent, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import { Botao, Card, Erro, Selo, Titulo, campo, formatarDoc } from '@/components/ui';
+import StatusSefaz from '@/components/status-sefaz';
 
 interface Cnpj {
   cnpj: string;
@@ -52,7 +53,39 @@ export default function ConsultasPage() {
   const [dadosCnpj, setDadosCnpj] = useState<Cnpj | null>(null);
   const [dadosCep, setDadosCep] = useState<Cep | null>(null);
   const [erro, setErro] = useState<string | null>(null);
-  const [carregando, setCarregando] = useState<'cnpj' | 'cep' | null>(null);
+  const [carregando, setCarregando] = useState<'cnpj' | 'cep' | 'ncm' | 'cnae' | null>(null);
+  const [ncmBusca, setNcmBusca] = useState('');
+  const [ncm, setNcm] = useState<{ codigo: string; descricao: string }[] | null>(null);
+  const [cnaeCodigo, setCnaeCodigo] = useState('');
+  const [cnae, setCnae] = useState<{ codigo: string; descricao: string; classe: string | null; divisao: string | null; secao: string | null; atividades: string[] } | null>(null);
+
+  async function consultarNcm(e: FormEvent) {
+    e.preventDefault();
+    setErro(null);
+    setCarregando('ncm');
+    try {
+      setNcm(await apiFetch(`/consultas/ncm?busca=${encodeURIComponent(ncmBusca)}`));
+    } catch (err) {
+      setNcm(null);
+      setErro(err instanceof Error ? err.message : 'Erro na consulta.');
+    } finally {
+      setCarregando(null);
+    }
+  }
+
+  async function consultarCnae(e: FormEvent) {
+    e.preventDefault();
+    setErro(null);
+    setCarregando('cnae');
+    try {
+      setCnae(await apiFetch(`/consultas/cnae/${cnaeCodigo.replace(/\D/g, '')}`));
+    } catch (err) {
+      setCnae(null);
+      setErro(err instanceof Error ? err.message : 'Erro na consulta.');
+    } finally {
+      setCarregando(null);
+    }
+  }
 
   async function consultarCnpj(e: FormEvent) {
     e.preventDefault();
@@ -84,7 +117,7 @@ export default function ConsultasPage() {
 
   return (
     <main className="mx-auto max-w-7xl">
-      <Titulo titulo="Consultas públicas" subtitulo="CNPJ com dados da Receita Federal (dados abertos) e CEP dos Correios, via BrasilAPI." />
+      <Titulo titulo="Consultas públicas" subtitulo="CNPJ e CEP (Receita e Correios), NCM, CNAE (IBGE) e status da SEFAZ, direto das fontes oficiais." />
       <Erro msg={erro} />
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -178,8 +211,60 @@ export default function ConsultasPage() {
               </div>
             )}
           </Card>
+
+          <Card>
+            <h2 className="mb-2 text-sm font-semibold">CNAE (IBGE)</h2>
+            <form onSubmit={consultarCnae} className="flex gap-2">
+              <input className={campo} placeholder="Ex.: 4721-1/02" value={cnaeCodigo} onChange={(e) => setCnaeCodigo(e.target.value)} required />
+              <Botao type="submit" disabled={carregando === 'cnae'}>
+                {carregando === 'cnae' ? '…' : 'Buscar'}
+              </Botao>
+            </form>
+            {cnae && (
+              <div className="mt-3 text-sm">
+                <p className="font-medium">
+                  {cnae.codigo} · {cnae.descricao}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">{[cnae.secao, cnae.divisao, cnae.classe].filter(Boolean).join(' › ')}</p>
+                {!!cnae.atividades.length && (
+                  <details className="mt-2 text-xs text-slate-600">
+                    <summary className="cursor-pointer text-indigo-700">{cnae.atividades.length} atividades compreendidas</summary>
+                    <ul className="mt-1 max-h-40 list-disc overflow-y-auto pl-4">
+                      {cnae.atividades.map((a) => (
+                        <li key={a}>{a}</li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+              </div>
+            )}
+          </Card>
+
+          <Card>
+            <h2 className="mb-2 text-sm font-semibold">NCM</h2>
+            <form onSubmit={consultarNcm} className="flex gap-2">
+              <input className={campo} placeholder="Código ou descrição (ex.: pão)" value={ncmBusca} onChange={(e) => setNcmBusca(e.target.value)} required minLength={2} />
+              <Botao type="submit" disabled={carregando === 'ncm'}>
+                {carregando === 'ncm' ? '…' : 'Buscar'}
+              </Botao>
+            </form>
+            {ncm && (
+              <ul className="mt-3 max-h-72 divide-y divide-slate-100 overflow-y-auto text-sm">
+                {ncm.length === 0 && <li className="py-2 text-slate-500">Nada encontrado.</li>}
+                {ncm.map((n) => (
+                  <li key={n.codigo} className="py-1.5">
+                    <span className="font-mono text-xs text-indigo-700">{n.codigo}</span> <span className="text-slate-700">{n.descricao}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
         </div>
       </div>
+      <Card className="mt-6">
+        <h2 className="mb-3 font-semibold">Status dos webservices da NF-e por autorizador</h2>
+        <StatusSefaz />
+      </Card>
     </main>
   );
 }

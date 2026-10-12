@@ -1,4 +1,4 @@
-import { Controller, Get, Param, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ConsultasService } from './consultas.service';
 
@@ -20,6 +20,31 @@ export class ConsultasController {
   @Get('feriados/:ano')
   feriados(@Param('ano', ParseIntPipe) ano: number) {
     return this.consultasService.feriados(ano);
+  }
+
+  @Get('cambio')
+  cambio() {
+    return this.consultasService.cambio();
+  }
+
+  @Get('municipios/:uf')
+  municipios(@Param('uf') uf: string) {
+    return this.consultasService.municipios(uf);
+  }
+
+  @Get('cnae/:codigo')
+  cnae(@Param('codigo') codigo: string) {
+    return this.consultasService.cnae(codigo);
+  }
+
+  @Get('ncm')
+  ncm(@Query('busca') busca = '') {
+    return this.consultasService.ncm(busca);
+  }
+
+  @Get('sefaz-status')
+  statusSefaz() {
+    return this.consultasService.statusSefaz();
   }
 
   @Get('indices')
