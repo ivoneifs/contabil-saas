@@ -6,4 +6,6 @@ export interface JwtPayload {
   organizationId: string;
   role: MembershipRole;
   isSuperAdmin: boolean;
+  // Preenchido a cada requisição pela JwtStrategy (não vai no token).
+  permissoes?: string[];
 }

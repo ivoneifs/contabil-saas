@@ -118,7 +118,7 @@ export function PessoalSection({ clientId }: { clientId: string }) {
           onChange={(e) => setDataAdmissao(e.target.value)}
           required
         />
-        <button type="submit" className="rounded bg-black px-3 py-2 text-white">
+        <button type="submit" className="rounded-lg bg-indigo-600 px-3 py-2 text-white hover:bg-indigo-700">
           Adicionar
         </button>
       </form>

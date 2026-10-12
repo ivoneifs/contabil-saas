@@ -1,11 +1,13 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { PermissoesGuard, Requer } from '../auth/permissoes.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtPayload } from '../auth/jwt-payload.interface';
 import { AssistenteService } from './assistente.service';
 import { ChatDto } from './dto/chat.dto';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissoesGuard)
+@Requer('ia')
 @Controller('assistente')
 export class AssistenteController {
   constructor(private readonly assistenteService: AssistenteService) {}

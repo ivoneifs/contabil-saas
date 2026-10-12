@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, FormEvent } from 'react';
-import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 
 interface Client {
@@ -83,10 +82,7 @@ export default function ObrigacoesFiscaisPage() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl p-8">
-      <Link href="/dashboard" className="text-sm text-blue-600">
-        ← Clientes
-      </Link>
+    <main className="mx-auto max-w-5xl">
       <h1 className="mt-2 mb-6 text-2xl font-semibold">Obrigações fiscais</h1>
 
       <form onSubmit={handleCreate} className="mb-8 flex flex-wrap items-end gap-2">
@@ -124,7 +120,7 @@ export default function ObrigacoesFiscaisPage() {
           onChange={(e) => setPrazo(e.target.value)}
           required
         />
-        <button type="submit" className="rounded bg-black px-3 py-2 text-white">
+        <button type="submit" className="rounded-lg bg-indigo-600 px-3 py-2 text-white hover:bg-indigo-700">
           Adicionar
         </button>
       </form>

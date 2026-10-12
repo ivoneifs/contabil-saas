@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -13,15 +14,23 @@ import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtPayload } from './jwt-payload.interface';
+import { motivoBloqueio } from './acesso';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly config: ConfigService,
   ) {}
 
   async signup(dto: SignupDto) {
+    // Contas são vendidas e criadas pelo Super Admin; o cadastro público só
+    // abre com PERMITIR_CADASTRO_PUBLICO=true.
+    if (this.config.get<string>('PERMITIR_CADASTRO_PUBLICO') !== 'true') {
+      throw new ForbiddenException('Cadastro fechado. Para contratar, fale com a gente pelo WhatsApp (74) 98825-8825.');
+    }
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (existing) {
       throw new ConflictException('Já existe um usuário com este e-mail.');
@@ -68,6 +77,18 @@ export class AuthService {
     const passwordOk = await bcrypt.compare(dto.password, user.passwordHash);
     if (!passwordOk) {
       throw new UnauthorizedException('Credenciais inválidas.');
+    }
+    if (!user.ativo) {
+      throw new ForbiddenException('Este usuário está bloqueado. Fale com o administrador.');
+    }
+
+    // Super admin entra mesmo em escritório bloqueado (para dar suporte).
+    if (!user.isSuperAdmin) {
+      const liberadas = user.memberships.filter((m) => !motivoBloqueio(m.organization));
+      if (user.memberships.length > 0 && liberadas.length === 0) {
+        throw new ForbiddenException(motivoBloqueio(user.memberships[0].organization)!);
+      }
+      user.memberships = liberadas;
     }
 
     if (user.memberships.length === 0) {
@@ -123,6 +144,28 @@ export class AuthService {
     await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
 
     return { success: true };
+  }
+
+  async eu(payload: JwtPayload) {
+    const [user, org] = await Promise.all([
+      this.prisma.user.findUnique({ where: { id: payload.sub }, select: { name: true, email: true } }),
+      payload.organizationId
+        ? this.prisma.organization.findUnique({ where: { id: payload.organizationId }, select: { id: true, name: true, acessoAte: true } })
+        : null,
+    ]);
+    return {
+      nome: user?.name ?? '',
+      email: user?.email ?? payload.email,
+      papel: payload.role,
+      isSuperAdmin: payload.isSuperAdmin,
+      permissoes: payload.permissoes ?? [],
+      escritorio: org,
+    };
+  }
+
+  // Token para o Super Admin abrir o painel de um escritório (suporte).
+  tokenDeSuporte(superAdmin: { id: string; email: string }, org: { id: string; name: string }) {
+    return this.issueTokenResponse(superAdmin.id, superAdmin.email, org.id, org.name, MembershipRole.ADMIN, true);
   }
 
   private issueTokenResponse(

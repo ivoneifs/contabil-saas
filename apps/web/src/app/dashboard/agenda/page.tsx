@@ -66,10 +66,7 @@ export default function AgendaGeralPage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl p-8">
-      <Link href="/dashboard" className="text-sm text-blue-600">
-        ← Clientes
-      </Link>
+    <main className="mx-auto max-w-4xl">
       <h1 className="mt-2 mb-6 text-2xl font-semibold">Agenda geral</h1>
 
       {error && <p className="mb-4 text-sm text-red-600">{error}</p>}

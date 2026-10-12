@@ -1,213 +1,124 @@
 'use client';
 
-import { useEffect, useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { apiFetch, clearToken, getIsSuperAdmin } from '@/lib/api';
+import { Card, Erro, Indicador, Selo, Titulo, Vazio, brl, dataBR, useApi } from '@/components/ui';
 
-interface Client {
+interface Resumo {
+  clientes: number;
+  obrigacoesPendentes: number;
+  obrigacoesAtrasadas: number;
+  obrigacoesSemana: number;
+  notasMes: number;
+  funcionariosAtivos: number;
+  aReceber: number;
+  compromissosHoje: number;
+  certificadosVencendo: { id: string; titular: string; validoAte: string }[];
+  proximasObrigacoes: { id: string; titulo: string; prazo: string; status: string; client: { razaoSocial: string } }[];
+}
+
+interface Conector {
   id: string;
-  razaoSocial: string;
-  cnpjCpf: string;
-  uf: string;
+  nome: string;
+  status: 'CONECTADO' | 'AGUARDANDO_CREDENCIAL';
 }
 
-function onlyDigits(value: string) {
-  return value.replace(/\D/g, '');
-}
-
-export default function DashboardPage() {
-  const router = useRouter();
-  const [clients, setClients] = useState<Client[]>([]);
-  const [razaoSocial, setRazaoSocial] = useState('');
-  const [cnpjCpf, setCnpjCpf] = useState('');
-  const [uf, setUf] = useState('BA');
-  const [municipio, setMunicipio] = useState('');
-  const [tipoPessoa, setTipoPessoa] = useState<'PJ' | 'PF' | null>(null);
-  const [buscandoCnpj, setBuscandoCnpj] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isSuperAdmin, setIsSuperAdminState] = useState(false);
-
-  useEffect(() => {
-    setIsSuperAdminState(getIsSuperAdmin());
-  }, []);
-
-  async function loadClients() {
-    try {
-      const data = await apiFetch<Client[]>('/clients');
-      setClients(data);
-    } catch (err) {
-      if (err instanceof Error && err.message.includes('401')) {
-        router.push('/login');
-        return;
-      }
-      setError(err instanceof Error ? err.message : 'Erro ao carregar clientes.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    loadClients();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  async function handleCnpjCpfChange(value: string) {
-    setCnpjCpf(value);
-    const digits = onlyDigits(value);
-
-    if (digits.length === 11) {
-      // CPF: não existe API pública/gratuita de consulta por CPF (dado protegido
-      // pela LGPD) — só classificamos como Pessoa Física, sem autopreenchimento.
-      setTipoPessoa('PF');
-      return;
-    }
-
-    if (digits.length !== 14) {
-      setTipoPessoa(null);
-      return;
-    }
-
-    setTipoPessoa('PJ');
-    setBuscandoCnpj(true);
-    setError(null);
-    try {
-      const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
-      if (!res.ok) throw new Error('CNPJ não encontrado na Receita Federal.');
-      const data = await res.json();
-      setRazaoSocial(data.razao_social ?? '');
-      setUf(data.uf ?? uf);
-      setMunicipio(data.municipio ?? '');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao consultar CNPJ.');
-    } finally {
-      setBuscandoCnpj(false);
-    }
-  }
-
-  async function handleCreate(e: FormEvent) {
-    e.preventDefault();
-    setError(null);
-    try {
-      await apiFetch('/clients', {
-        method: 'POST',
-        body: JSON.stringify({ razaoSocial, cnpjCpf: onlyDigits(cnpjCpf), uf, municipio: municipio || undefined }),
-      });
-      setRazaoSocial('');
-      setCnpjCpf('');
-      setMunicipio('');
-      setTipoPessoa(null);
-      await loadClients();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao criar cliente.');
-    }
-  }
-
-  function handleLogout() {
-    clearToken();
-    router.push('/login');
-  }
+export default function PainelPage() {
+  const { dados: r, erro } = useApi<Resumo>('/painel/resumo');
+  const { dados: conectores } = useApi<Conector[]>('/integracoes/catalogo');
+  const conectados = conectores?.filter((c) => c.status === 'CONECTADO').length ?? 0;
+  const hoje = new Date();
 
   return (
-    <main className="mx-auto max-w-3xl p-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Clientes</h1>
-        <div className="flex gap-4">
-          {isSuperAdmin && (
-            <Link href="/dashboard/admin" className="text-sm font-medium text-purple-600">
-              Super Admin
-            </Link>
-          )}
-          <Link href="/dashboard/agenda" className="text-sm text-blue-600">
-            Agenda
-          </Link>
-          <Link href="/dashboard/obrigacoes" className="text-sm text-blue-600">
-            Obrigações fiscais
-          </Link>
-          <Link href="/dashboard/assistente" className="text-sm text-blue-600">
-            Assistente
-          </Link>
-          <Link href="/dashboard/settings" className="text-sm text-blue-600">
-            Configurações
-          </Link>
-          <button onClick={handleLogout} className="text-sm text-blue-600">
-            Sair
-          </button>
-        </div>
+    <main className="mx-auto max-w-7xl">
+      <Titulo
+        titulo="Painel do escritório"
+        subtitulo={hoje.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+      />
+      <Erro msg={erro} />
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Indicador rotulo="Clientes" valor={r?.clientes ?? '–'} detalhe={`${r?.funcionariosAtivos ?? 0} funcionários ativos`} />
+        <Indicador
+          rotulo="Obrigações atrasadas"
+          valor={r?.obrigacoesAtrasadas ?? '–'}
+          tom={r && r.obrigacoesAtrasadas > 0 ? 'red' : 'green'}
+          detalhe={`${r?.obrigacoesPendentes ?? 0} pendentes no total`}
+        />
+        <Indicador rotulo="Vencem em 7 dias" valor={r?.obrigacoesSemana ?? '–'} tom="amber" detalhe={`${r?.compromissosHoje ?? 0} compromissos hoje`} />
+        <Indicador rotulo="A receber" valor={r ? brl(r.aReceber) : '–'} tom="indigo" detalhe={`${r?.notasMes ?? 0} notas emitidas no mês`} />
       </div>
 
-      <form onSubmit={handleCreate} className="mb-2 flex flex-wrap gap-2">
-        <div className="flex flex-col">
-          <input
-            className="rounded border px-3 py-2"
-            placeholder="CPF ou CNPJ"
-            value={cnpjCpf}
-            onChange={(e) => handleCnpjCpfChange(e.target.value)}
-            required
-          />
-          {tipoPessoa && (
-            <span className="mt-1 text-xs text-gray-500">
-              {tipoPessoa === 'PJ' ? 'Pessoa Jurídica' : 'Pessoa Física'}
-              {buscandoCnpj && ' · consultando Receita Federal...'}
-            </span>
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="font-semibold">Próximas obrigações</h2>
+            <Link href="/dashboard/calendario" className="text-sm text-indigo-700 hover:underline">
+              Agenda inteligente →
+            </Link>
+          </div>
+          {!r?.proximasObrigacoes.length ? (
+            <Vazio>
+              Nenhuma obrigação pendente. Gere as do mês na{' '}
+              <Link href="/dashboard/calendario" className="text-indigo-700 underline">
+                agenda inteligente
+              </Link>
+              .
+            </Vazio>
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {r.proximasObrigacoes.map((o) => {
+                const atrasada = new Date(o.prazo) < new Date(hoje.toDateString());
+                return (
+                  <li key={o.id} className="flex items-center justify-between gap-3 py-2.5">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{o.titulo}</p>
+                      <p className="truncate text-xs text-slate-500">{o.client.razaoSocial}</p>
+                    </div>
+                    <Selo tom={atrasada ? 'red' : 'slate'}>{dataBR(o.prazo)}</Selo>
+                  </li>
+                );
+              })}
+            </ul>
           )}
+        </Card>
+
+        <div className="space-y-6">
+          <Card>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="font-semibold">Integrações</h2>
+              <Link href="/dashboard/integracoes" className="text-sm text-indigo-700 hover:underline">
+                Ver todas →
+              </Link>
+            </div>
+            <p className="text-3xl font-semibold tabular-nums">
+              {conectados}
+              <span className="text-base font-normal text-slate-400">/{conectores?.length ?? 0}</span>
+            </p>
+            <p className="text-xs text-slate-500">conectadas aos órgãos e serviços</p>
+          </Card>
+
+          <Card>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="font-semibold">Certificados A1</h2>
+              <Link href="/dashboard/certificados" className="text-sm text-indigo-700 hover:underline">
+                Cofre →
+              </Link>
+            </div>
+            {!r?.certificadosVencendo.length ? (
+              <p className="text-sm text-slate-500">Nenhum certificado vence nos próximos 30 dias.</p>
+            ) : (
+              <ul className="space-y-2">
+                {r.certificadosVencendo.map((c) => (
+                  <li key={c.id} className="flex items-center justify-between gap-2 text-sm">
+                    <span className="truncate">{c.titular}</span>
+                    <Selo tom={new Date(c.validoAte) < hoje ? 'red' : 'amber'}>{new Date(c.validoAte).toLocaleDateString('pt-BR')}</Selo>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
         </div>
-        <input
-          className="rounded border px-3 py-2"
-          placeholder="Razão social / Nome"
-          value={razaoSocial}
-          onChange={(e) => setRazaoSocial(e.target.value)}
-          required
-        />
-        <input
-          className="w-16 rounded border px-3 py-2"
-          placeholder="UF"
-          value={uf}
-          maxLength={2}
-          onChange={(e) => setUf(e.target.value.toUpperCase())}
-          required
-        />
-        <button type="submit" className="rounded bg-black px-3 py-2 text-white">
-          Adicionar
-        </button>
-      </form>
-      <p className="mb-6 text-xs text-gray-400">
-        Para CNPJ, os dados são preenchidos automaticamente pela Receita Federal (via BrasilAPI).
-      </p>
-
-      {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
-
-      {loading ? (
-        <p>Carregando...</p>
-      ) : clients.length === 0 ? (
-        <p className="text-gray-500">Nenhum cliente cadastrado ainda.</p>
-      ) : (
-        <table className="w-full border-collapse text-left">
-          <thead>
-            <tr className="border-b">
-              <th className="py-2">Razão social</th>
-              <th className="py-2">CNPJ/CPF</th>
-              <th className="py-2">UF</th>
-              <th className="py-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {clients.map((c) => (
-              <tr key={c.id} className="border-b">
-                <td className="py-2">{c.razaoSocial}</td>
-                <td className="py-2">{c.cnpjCpf}</td>
-                <td className="py-2">{c.uf}</td>
-                <td className="py-2 text-right">
-                  <Link href={`/dashboard/clients/${c.id}`} className="text-sm text-blue-600">
-                    Abrir →
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      </div>
     </main>
   );
 }

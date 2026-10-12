@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, FormEvent, useRef, useEffect } from 'react';
-import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 
 interface Message {
@@ -44,10 +43,7 @@ export default function AssistentePage() {
   }
 
   return (
-    <main className="mx-auto flex h-screen max-w-2xl flex-col p-8">
-      <Link href="/dashboard" className="mb-4 text-sm text-blue-600">
-        ← Clientes
-      </Link>
+    <main className="mx-auto flex h-[calc(100vh-8rem)] max-w-3xl flex-col">
       <h1 className="mb-4 text-2xl font-semibold">Assistente</h1>
 
       <div className="mb-4 flex-1 space-y-3 overflow-y-auto rounded border p-4">
@@ -58,7 +54,7 @@ export default function AssistentePage() {
           <div key={i} className={m.role === 'user' ? 'text-right' : 'text-left'}>
             <span
               className={`inline-block max-w-[85%] rounded px-3 py-2 text-sm ${
-                m.role === 'user' ? 'bg-black text-white' : 'bg-gray-100 text-gray-900'
+                m.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-900'
               }`}
             >
               {m.content}
@@ -86,7 +82,7 @@ export default function AssistentePage() {
         <button
           type="submit"
           disabled={loading}
-          className="rounded bg-black px-4 py-2 text-white disabled:opacity-50"
+          className="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 disabled:opacity-50"
         >
           Enviar
         </button>

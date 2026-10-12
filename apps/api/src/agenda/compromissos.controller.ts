@@ -10,13 +10,15 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { PermissoesGuard, Requer } from '../auth/permissoes.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtPayload } from '../auth/jwt-payload.interface';
 import { CompromissosService } from './compromissos.service';
 import { CreateCompromissoDto } from './dto/create-compromisso.dto';
 import { UpdateCompromissoDto } from './dto/update-compromisso.dto';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissoesGuard)
+@Requer('obrigacoes')
 @Controller('compromissos')
 export class CompromissosController {
   constructor(private readonly compromissosService: CompromissosService) {}

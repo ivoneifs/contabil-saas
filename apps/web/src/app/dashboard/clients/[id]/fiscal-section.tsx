@@ -98,7 +98,7 @@ export function FiscalSection({ clientId }: { clientId: string }) {
         <button
           type="submit"
           disabled={emitindo}
-          className="rounded bg-black px-3 py-2 text-white disabled:opacity-50"
+          className="rounded-lg bg-indigo-600 px-3 py-2 text-white hover:bg-indigo-700 disabled:opacity-50"
         >
           {emitindo ? 'Emitindo...' : 'Emitir nota'}
         </button>

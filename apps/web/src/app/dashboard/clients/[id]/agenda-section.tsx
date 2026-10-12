@@ -101,7 +101,7 @@ export function AgendaSection({ clientId }: { clientId: string }) {
           onChange={(e) => setFim(e.target.value)}
           placeholder="Fim (opcional)"
         />
-        <button type="submit" className="rounded bg-black px-3 py-2 text-white">
+        <button type="submit" className="rounded-lg bg-indigo-600 px-3 py-2 text-white hover:bg-indigo-700">
           Agendar
         </button>
       </form>
