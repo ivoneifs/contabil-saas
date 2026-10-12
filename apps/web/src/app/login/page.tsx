@@ -3,6 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiFetch, setToken, setIsSuperAdmin } from '@/lib/api';
+import AuthShell from '@/components/auth-shell';
 
 interface OrgOption {
   organizationId: string;
@@ -48,11 +49,14 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-4 p-8">
-      <h1 className="text-2xl font-semibold">Entrar</h1>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+    <AuthShell>
+      <div>
+        <h2 className="text-2xl font-semibold text-slate-900">Entrar na sua conta</h2>
+        <p className="mt-1 text-sm text-slate-500">Acesse o painel do seu escritório.</p>
+      </div>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <input
-          className="rounded border px-3 py-2"
+          className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
           type="email"
           placeholder="E-mail"
           value={email}
@@ -60,7 +64,7 @@ export default function LoginPage() {
           required
         />
         <input
-          className="rounded border px-3 py-2"
+          className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
           type="password"
           placeholder="Senha"
           value={password}
@@ -70,7 +74,7 @@ export default function LoginPage() {
 
         {orgOptions && (
           <select
-            className="rounded border px-3 py-2"
+            className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
             value={organizationId}
             onChange={(e) => setOrganizationId(e.target.value)}
             required
@@ -88,14 +92,14 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="rounded bg-black px-3 py-2 text-white disabled:opacity-50"
+          className="w-full rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 px-3 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/25 transition hover:opacity-95 disabled:opacity-50"
         >
           {loading ? 'Entrando...' : 'Entrar'}
         </button>
       </form>
-      <a href="/signup" className="text-sm text-blue-600">
+      <a href="/signup" className="block text-center text-sm font-medium text-indigo-600 hover:text-indigo-700">
         Criar um escritório novo
       </a>
-    </main>
+    </AuthShell>
   );
 }

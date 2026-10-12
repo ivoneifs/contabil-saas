@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 
 interface OrgRow {
@@ -27,10 +26,7 @@ export default function AdminPage() {
   }, []);
 
   return (
-    <main className="mx-auto max-w-4xl p-8">
-      <Link href="/dashboard" className="text-sm text-blue-600">
-        ← Clientes
-      </Link>
+    <main className="mx-auto max-w-4xl">
       <h1 className="mt-2 mb-6 text-2xl font-semibold">Super Admin · Escritórios na plataforma</h1>
 
       {error && <p className="mb-4 text-sm text-red-600">{error}</p>}

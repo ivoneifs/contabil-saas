@@ -7,21 +7,75 @@
   --foreground: #171717;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d3e0;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+/* ---------- Landing page (mesmo design do Genesis IA) ---------- */
+.lp {
+  --lp-bg: #05060a;
+  --lp-ink: #eef0f7;
+  --lp-mute: #8b90a6;
+  --lp-line: rgba(255, 255, 255, 0.08);
+  background: var(--lp-bg);
+  color: var(--lp-ink);
+}
+.lp-grain::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.lp-grid {
+  background-image:
+    linear-gradient(var(--lp-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--lp-line) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+}
+@keyframes lp-rise {
+  from { opacity: 0; transform: translateY(24px); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+.lp-rise { animation: lp-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@keyframes lp-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(200, 255, 77, 0.5); }
+  50% { box-shadow: 0 0 0 6px rgba(200, 255, 77, 0); }
+}
+.lp-pulse { animation: lp-pulse 2s ease-in-out infinite; }
+@keyframes lp-scan {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(400%); }
+}
+.lp-scan { animation: lp-scan 4.5s linear infinite; }
+@keyframes lp-orbit { to { transform: rotate(360deg); } }
+.lp-orbit { animation: lp-orbit 40s linear infinite; }
+.lp-reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.lp-reveal.lp-in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .lp-rise, .lp-pulse, .lp-scan, .lp-orbit { animation: none; }
+  .lp-reveal { opacity: 1; transform: none; transition: none; }
 }

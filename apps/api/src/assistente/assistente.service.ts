@@ -37,6 +37,20 @@ export class AssistenteService {
     return this.client;
   }
 
+  // Uma chamada simples (system + user) para os módulos que usam IA
+  // (agenda inteligente, modelos de documentos).
+  async completar(system: string, user: string, opcoes: { json?: boolean } = {}): Promise<string> {
+    const completion = await this.getClient().chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ],
+      ...(opcoes.json ? { response_format: { type: 'json_object' as const } } : {}),
+    });
+    return completion.choices[0]?.message?.content ?? '';
+  }
+
   async chat(organizationId: string, dto: ChatDto): Promise<{ reply: string }> {
     const openai = this.getClient();
 

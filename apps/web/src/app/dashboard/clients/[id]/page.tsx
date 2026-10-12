@@ -41,8 +41,8 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
   }, [clientId]);
 
   return (
-    <main className="mx-auto max-w-4xl p-8">
-      <Link href="/dashboard" className="text-sm text-blue-600">
+    <main className="mx-auto max-w-4xl">
+      <Link href="/dashboard/clients" className="text-sm text-blue-600">
         ← Clientes
       </Link>
 

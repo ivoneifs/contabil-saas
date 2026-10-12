@@ -11,6 +11,11 @@ import { DocumentosModule } from './documentos/documentos.module';
 import { AssistenteModule } from './assistente/assistente.module';
 import { IntegracoesModule } from './integracoes/integracoes.module';
 import { AdminModule } from './admin/admin.module';
+import { CertificadosModule } from './certificados/certificados.module';
+import { ConsultasModule } from './consultas/consultas.module';
+import { PainelModule } from './painel/painel.module';
+import { AgendaInteligenteModule } from './agenda-inteligente/agenda-inteligente.module';
+import { ModelosModule } from './modelos/modelos.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -27,6 +32,11 @@ import { AppController } from './app.controller';
     AssistenteModule,
     IntegracoesModule,
     AdminModule,
+    CertificadosModule,
+    ConsultasModule,
+    PainelModule,
+    AgendaInteligenteModule,
+    ModelosModule,
   ],
   controllers: [AppController],
 })

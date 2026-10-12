@@ -15,6 +15,11 @@ export class IntegracoesController {
     return this.integracoesService.get(user.organizationId);
   }
 
+  @Get('catalogo')
+  catalogo(@CurrentUser() user: JwtPayload) {
+    return this.integracoesService.catalogo(user.organizationId);
+  }
+
   @Post()
   update(@CurrentUser() user: JwtPayload, @Body() dto: UpdateIntegracoesDto) {
     return this.integracoesService.update(user.organizationId, dto);

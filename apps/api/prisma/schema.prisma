@@ -113,6 +113,7 @@ model Organization {
   memberships Membership[]
   clients     Client[]
   integracoes IntegracoesConfig?
+  certificados CertificadoDigital[]
 
   @@map("organizations")
 }
@@ -126,6 +127,11 @@ model IntegracoesConfig {
   focusNfeToken    String?
   focusNfeBaseUrl  String?
   asaasApiKey      String?
+  // Segredos abaixo ficam cifrados com o cofre (src/common/cofre.ts).
+  serproConsumerKey       String?
+  serproConsumerSecret    String?
+  nuvemFiscalClientId     String?
+  nuvemFiscalClientSecret String?
   updatedAt      DateTime @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -185,6 +191,7 @@ model Client {
   compromissos Compromisso[]
   documentos   Documento[]
   obrigacoesFiscais ObrigacaoFiscal[]
+  certificados CertificadoDigital[]
 
   @@unique([organizationId, cnpjCpf])
   @@index([organizationId])
@@ -323,4 +330,29 @@ model ObrigacaoFiscal {
   @@index([organizationId])
   @@index([clientId])
   @@map("obrigacoes_fiscais")
+}
+
+// Certificado digital A1 (.pfx). Sem clientId = certificado do próprio
+// escritório (usado como contratante/procurador no SERPRO e no eSocial).
+// O arquivo e a senha ficam cifrados; os metadados ficam em claro para
+// listagem e alerta de vencimento.
+model CertificadoDigital {
+  id             String   @id @default(uuid())
+  organizationId String
+  clientId       String?
+  titular        String
+  documento      String? // CNPJ ou CPF extraído do certificado
+  emissor        String?
+  validoDe       DateTime
+  validoAte      DateTime
+  pfxCifrado     Bytes
+  senhaCifrada   String
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client       Client?      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([clientId])
+  @@map("certificados_digitais")
 }

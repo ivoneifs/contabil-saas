@@ -42,3 +42,31 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
 
   return body as T;
 }
+
+// Upload multipart (sem Content-Type: o navegador define o boundary).
+export async function apiUpload<T>(path: string, form: FormData): Promise<T> {
+  const token = getToken();
+  const res = await fetch(`${API_URL}${path}`, {
+    method: 'POST',
+    body: form,
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  const body = res.headers.get('content-type')?.includes('application/json') ? await res.json() : undefined;
+  if (!res.ok) {
+    const message = (body && (body.message || body.error)) || `Erro ${res.status}`;
+    throw new Error(Array.isArray(message) ? message.join(', ') : message);
+  }
+  return body as T;
+}
+
+export async function apiDownload(path: string, nomeArquivo: string) {
+  const token = getToken();
+  const res = await fetch(`${API_URL}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  if (!res.ok) throw new Error(`Erro ${res.status} ao baixar.`);
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nomeArquivo;
+  a.click();
+  URL.revokeObjectURL(url);
+}

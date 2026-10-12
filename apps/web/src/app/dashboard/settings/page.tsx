@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, FormEvent } from 'react';
-import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 
 interface IntegracoesStatus {
@@ -10,6 +9,10 @@ interface IntegracoesStatus {
   focusNfeBaseUrl: string | null;
   asaasConfigurado: boolean;
   asaasApiKeyMascarado: string | null;
+  serproConfigurado: boolean;
+  serproConsumerKeyMascarado: string | null;
+  nuvemFiscalConfigurado: boolean;
+  nuvemFiscalClientIdMascarado: string | null;
 }
 
 export default function SettingsPage() {
@@ -24,6 +27,10 @@ export default function SettingsPage() {
   const [focusNfeToken, setFocusNfeToken] = useState('');
   const [focusNfeBaseUrl, setFocusNfeBaseUrl] = useState('');
   const [asaasApiKey, setAsaasApiKey] = useState('');
+  const [serproKey, setSerproKey] = useState('');
+  const [serproSecret, setSerproSecret] = useState('');
+  const [nuvemId, setNuvemId] = useState('');
+  const [nuvemSecret, setNuvemSecret] = useState('');
   const [integError, setIntegError] = useState<string | null>(null);
   const [integSuccess, setIntegSuccess] = useState(false);
   const [integLoading, setIntegLoading] = useState(false);
@@ -81,11 +88,19 @@ export default function SettingsPage() {
           focusNfeToken: focusNfeToken || undefined,
           focusNfeBaseUrl: focusNfeBaseUrl || undefined,
           asaasApiKey: asaasApiKey || undefined,
+          serproConsumerKey: serproKey || undefined,
+          serproConsumerSecret: serproSecret || undefined,
+          nuvemFiscalClientId: nuvemId || undefined,
+          nuvemFiscalClientSecret: nuvemSecret || undefined,
         }),
       });
       setIntegracoes(data);
       setFocusNfeToken('');
       setAsaasApiKey('');
+      setSerproKey('');
+      setSerproSecret('');
+      setNuvemId('');
+      setNuvemSecret('');
       setIntegSuccess(true);
     } catch (err) {
       setIntegError(err instanceof Error ? err.message : 'Erro ao salvar integrações.');
@@ -95,12 +110,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="mx-auto max-w-md p-8">
-      <Link href="/dashboard" className="text-sm text-blue-600">
-        ← Clientes
-      </Link>
+    <main className="mx-auto max-w-md">
 
-      <h1 className="mt-2 mb-6 text-2xl font-semibold">Trocar senha</h1>
+      <h1 className="mb-6 text-2xl font-semibold">Trocar senha</h1>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input
@@ -137,7 +149,7 @@ export default function SettingsPage() {
         <button
           type="submit"
           disabled={loading}
-          className="rounded bg-black px-3 py-2 text-white disabled:opacity-50"
+          className="rounded-lg bg-indigo-600 px-3 py-2 text-white hover:bg-indigo-700 disabled:opacity-50"
         >
           {loading ? 'Salvando...' : 'Salvar nova senha'}
         </button>
@@ -186,13 +198,57 @@ export default function SettingsPage() {
           />
         </div>
 
+        <div>
+          <label className="mb-1 block text-sm font-medium">SERPRO Integra Contador (Receita Federal)</label>
+          <p className="mb-2 text-xs text-gray-500">
+            {integracoes?.serproConfigurado
+              ? `Configurado (consumer key ${integracoes.serproConsumerKeyMascarado})`
+              : 'Não configurado. As chaves ficam na área do cliente da Loja SERPRO após contratar.'}
+          </p>
+          <input
+            className="mb-2 w-full rounded border px-3 py-2"
+            placeholder="Consumer Key"
+            value={serproKey}
+            onChange={(e) => setSerproKey(e.target.value)}
+          />
+          <input
+            className="w-full rounded border px-3 py-2"
+            type="password"
+            placeholder="Consumer Secret"
+            value={serproSecret}
+            onChange={(e) => setSerproSecret(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium">Nuvem Fiscal (NFS-e, CT-e, MDF-e)</label>
+          <p className="mb-2 text-xs text-gray-500">
+            {integracoes?.nuvemFiscalConfigurado
+              ? `Configurado (client id ${integracoes.nuvemFiscalClientIdMascarado})`
+              : 'Não configurado'}
+          </p>
+          <input
+            className="mb-2 w-full rounded border px-3 py-2"
+            placeholder="Client ID"
+            value={nuvemId}
+            onChange={(e) => setNuvemId(e.target.value)}
+          />
+          <input
+            className="w-full rounded border px-3 py-2"
+            type="password"
+            placeholder="Client Secret"
+            value={nuvemSecret}
+            onChange={(e) => setNuvemSecret(e.target.value)}
+          />
+        </div>
+
         {integError && <p className="text-sm text-red-600">{integError}</p>}
         {integSuccess && <p className="text-sm text-green-600">Integrações salvas.</p>}
 
         <button
           type="submit"
           disabled={integLoading}
-          className="rounded bg-black px-3 py-2 text-white disabled:opacity-50"
+          className="rounded-lg bg-indigo-600 px-3 py-2 text-white hover:bg-indigo-700 disabled:opacity-50"
         >
           {integLoading ? 'Salvando...' : 'Salvar integrações'}
         </button>

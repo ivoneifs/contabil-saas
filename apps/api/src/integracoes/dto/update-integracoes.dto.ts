@@ -12,4 +12,20 @@ export class UpdateIntegracoesDto {
   @IsOptional()
   @IsString()
   asaasApiKey?: string;
+
+  @IsOptional()
+  @IsString()
+  serproConsumerKey?: string;
+
+  @IsOptional()
+  @IsString()
+  serproConsumerSecret?: string;
+
+  @IsOptional()
+  @IsString()
+  nuvemFiscalClientId?: string;
+
+  @IsOptional()
+  @IsString()
+  nuvemFiscalClientSecret?: string;
 }

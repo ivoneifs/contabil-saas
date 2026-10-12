@@ -14,6 +14,7 @@ import { JwtPayload } from '../auth/jwt-payload.interface';
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
+import { ImportarClientesDto } from './dto/importar-clientes.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('clients')
@@ -23,6 +24,11 @@ export class ClientsController {
   @Post()
   create(@CurrentUser() user: JwtPayload, @Body() dto: CreateClientDto) {
     return this.clientsService.create(user.organizationId, dto);
+  }
+
+  @Post('importar')
+  importar(@CurrentUser() user: JwtPayload, @Body() dto: ImportarClientesDto) {
+    return this.clientsService.importarCnpjs(user.organizationId, dto.cnpjs);
   }
 
   @Get()
