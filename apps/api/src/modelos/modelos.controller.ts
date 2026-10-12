@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { IsOptional, IsString, MaxLength } from 'class-validator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { PermissoesGuard, Requer } from '../auth/permissoes.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtPayload } from '../auth/jwt-payload.interface';
 import { ModelosService } from './modelos.service';
@@ -19,7 +20,8 @@ class GerarModeloDto {
   instrucoes?: string;
 }
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissoesGuard)
+@Requer('ia')
 @Controller('modelos')
 export class ModelosController {
   constructor(private readonly service: ModelosService) {}

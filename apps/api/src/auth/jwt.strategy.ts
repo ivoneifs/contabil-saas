@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { motivoBloqueio } from './acesso';
+import { TODAS, permissoesEfetivas } from './permissoes';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
@@ -36,6 +37,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       const motivo = motivoBloqueio(org);
       if (motivo) throw new ForbiddenException(motivo);
     }
-    return { ...payload, isSuperAdmin: user.isSuperAdmin };
+    let permissoes: string[] = [];
+    if (user.isSuperAdmin) permissoes = TODAS;
+    else if (payload.organizationId) {
+      const m = await this.prisma.membership.findUnique({
+        where: { organizationId_userId: { organizationId: payload.organizationId, userId: payload.sub } },
+        select: { role: true, personalizado: true, permissoes: true },
+      });
+      if (!m) throw new UnauthorizedException('Você não faz mais parte deste escritório.');
+      permissoes = permissoesEfetivas(m);
+      payload = { ...payload, role: m.role };
+    }
+    return { ...payload, isSuperAdmin: user.isSuperAdmin, permissoes };
   }
 }

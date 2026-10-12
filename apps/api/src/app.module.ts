@@ -18,6 +18,8 @@ import { AgendaInteligenteModule } from './agenda-inteligente/agenda-inteligente
 import { ModelosModule } from './modelos/modelos.module';
 import { IaModule } from './ia/ia.module';
 import { PlataformaModule } from './plataforma/plataforma.module';
+import { DocumentosFiscaisModule } from './documentos-fiscais/documentos-fiscais.module';
+import { EquipeModule } from './equipe/equipe.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -41,6 +43,8 @@ import { AppController } from './app.controller';
     AgendaInteligenteModule,
     ModelosModule,
     PlataformaModule,
+    DocumentosFiscaisModule,
+    EquipeModule,
   ],
   controllers: [AppController],
 })

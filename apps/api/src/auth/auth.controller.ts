@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
@@ -19,6 +19,13 @@ export class AuthController {
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  // Dados do usuário logado e permissões efetivas (o painel usa para montar o menu).
+  @UseGuards(JwtAuthGuard)
+  @Get('eu')
+  eu(@CurrentUser() user: JwtPayload) {
+    return this.authService.eu(user);
   }
 
   @UseGuards(JwtAuthGuard)

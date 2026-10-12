@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Calculator, ChevronDown, Crown, LogOut, Menu, Search, Settings, X } from 'lucide-react';
-import { clearToken, getIsSuperAdmin } from '@/lib/api';
+import { apiFetch, clearToken, getIsSuperAdmin } from '@/lib/api';
+import { EuContexto, type Eu } from '@/lib/permissoes';
 import { GRUPOS, TODOS_MODULOS, hrefDo } from '@/lib/modulos';
 import { usePlataforma } from '@/lib/usar-plataforma';
 
@@ -45,13 +46,15 @@ function Logo({ nome }: { nome: string }) {
   );
 }
 
-function Navegacao({ superAdmin, onNavegar }: { superAdmin: boolean; onNavegar?: () => void }) {
+function Navegacao({ superAdmin, permissoes, onNavegar }: { superAdmin: boolean; permissoes: string[] | null; onNavegar?: () => void }) {
   const pathname = usePathname();
   const [busca, setBusca] = useState('');
   const termo = busca.trim().toLowerCase();
   const grupos = GRUPOS.map((g) => ({
     ...g,
-    modulos: termo ? g.modulos.filter((m) => m.titulo.toLowerCase().includes(termo)) : g.modulos,
+    modulos: g.modulos
+      .filter((m) => superAdmin || !m.perm || permissoes?.includes(m.perm))
+      .filter((m) => !termo || m.titulo.toLowerCase().includes(termo)),
   })).filter((g) => g.modulos.length);
 
   return (
@@ -128,6 +131,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [superAdmin, setSuperAdmin] = useState(false);
   const [usuario, setUsuario] = useState({ email: '', role: '', organizationId: '' });
   const [suporte, setSuporte] = useState<string | null>(null);
+  const [eu, setEu] = useState<Eu | null>(null);
   const [semEscritorio, setSemEscritorio] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const plataforma = usePlataforma();
@@ -143,6 +147,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setSemEscritorio(!u.organizationId);
     setSuporte(window.localStorage.getItem('tokenSuperAdmin') ? window.localStorage.getItem('suporteEscritorio') : null);
     setPronto(true);
+    apiFetch<Eu>('/auth/eu')
+      .then(setEu)
+      .catch((err) => {
+        // Sessão inválida (usuário removido/bloqueado): volta ao login.
+        if (err instanceof Error && /401|bloquead|removid|não faz mais parte/i.test(err.message)) {
+          clearToken();
+          router.replace('/login');
+        }
+      });
   }, [router]);
 
   useEffect(() => {
@@ -191,13 +204,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!pronto) return <div className="min-h-screen bg-slate-50" />;
 
   const atual = TODOS_MODULOS.find((m) => ativo(pathname, hrefDo(m)));
-  const inicial = (usuario.email[0] ?? 'G').toUpperCase();
+  const inicial = ((eu?.nome || usuario.email)[0] ?? 'G').toUpperCase();
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900">
       <aside className={`sticky top-0 hidden h-screen w-64 shrink-0 flex-col md:flex ${FUNDO}`}>
         <Logo nome={plataforma.nomeSistema} />
-        <Navegacao superAdmin={superAdmin} />
+        <Navegacao superAdmin={superAdmin} permissoes={eu?.permissoes ?? null} />
       </aside>
 
       {gaveta && (
@@ -213,7 +226,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <X size={18} />
             </button>
             <Logo nome={plataforma.nomeSistema} />
-            <Navegacao superAdmin={superAdmin} onNavegar={() => setGaveta(false)} />
+            <Navegacao superAdmin={superAdmin} permissoes={eu?.permissoes ?? null} onNavegar={() => setGaveta(false)} />
           </aside>
         </div>
       )}
@@ -251,8 +264,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {inicial}
               </div>
               <span className="hidden text-left leading-tight sm:block">
-                <span className="block max-w-[180px] truncate text-sm font-medium text-slate-800">{usuario.email}</span>
-                <span className="block text-[11px] text-slate-500">{superAdmin ? 'Super Admin' : PAPEL[usuario.role] ?? usuario.role}</span>
+                <span className="block max-w-[180px] truncate text-sm font-medium text-slate-800">{eu?.nome || usuario.email}</span>
+                <span className="block text-[11px] text-slate-500">{superAdmin ? 'Super Admin' : PAPEL[eu?.papel ?? usuario.role] ?? usuario.role}</span>
               </span>
               <ChevronDown size={14} className="text-slate-400" />
             </button>
@@ -268,7 +281,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             )}
           </div>
         </header>
-        <div className="flex-1 px-4 py-6 lg:px-8">{children}</div>
+        <div className="flex-1 px-4 py-6 lg:px-8">
+          <EuContexto.Provider value={eu}>{children}</EuContexto.Provider>
+        </div>
       </div>
     </div>
   );

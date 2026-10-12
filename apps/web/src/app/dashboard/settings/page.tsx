@@ -2,6 +2,7 @@
 
 import { useState, useEffect, FormEvent } from 'react';
 import { apiFetch } from '@/lib/api';
+import { usePode } from '@/lib/permissoes';
 
 interface IntegracoesStatus {
   focusNfeConfigurado: boolean;
@@ -16,6 +17,7 @@ interface IntegracoesStatus {
 }
 
 export default function SettingsPage() {
+  const pode = usePode();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -46,8 +48,9 @@ export default function SettingsPage() {
   }
 
   useEffect(() => {
-    loadIntegracoes();
-  }, []);
+    if (pode('integracoes')) loadIntegracoes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pode('integracoes')]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -155,6 +158,8 @@ export default function SettingsPage() {
         </button>
       </form>
 
+      {pode('integracoes') && (
+        <>
       <h1 className="mt-10 mb-2 text-2xl font-semibold">Integrações</h1>
       <p className="mb-6 text-sm text-gray-500">
         Cole aqui as chaves dos provedores externos. Os campos ficam em branco por segurança — só
@@ -253,6 +258,8 @@ export default function SettingsPage() {
           {integLoading ? 'Salvando...' : 'Salvar integrações'}
         </button>
       </form>
+        </>
+      )}
     </main>
   );
 }

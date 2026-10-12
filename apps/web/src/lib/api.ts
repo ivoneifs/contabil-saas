@@ -70,3 +70,37 @@ export async function apiDownload(path: string, nomeArquivo: string) {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+// POST que devolve arquivo (ex.: exportação em ZIP).
+export async function apiBaixarPost(path: string, corpo: unknown, nomeArquivo: string) {
+  const token = getToken();
+  const res = await fetch(`${API_URL}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify(corpo),
+  });
+  if (!res.ok) {
+    const body = res.headers.get('content-type')?.includes('application/json') ? await res.json() : undefined;
+    throw new Error((body && body.message) || `Erro ${res.status} ao exportar.`);
+  }
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nomeArquivo;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Abre um arquivo protegido (PDF/XML) numa nova aba.
+export async function apiAbrir(path: string) {
+  const aba = window.open('', '_blank');
+  const token = getToken();
+  const res = await fetch(`${API_URL}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  if (!res.ok) {
+    aba?.close();
+    throw new Error(`Erro ${res.status} ao abrir.`);
+  }
+  const url = URL.createObjectURL(await res.blob());
+  if (aba) aba.location.href = url;
+  else window.location.href = url;
+}

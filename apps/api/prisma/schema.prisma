@@ -165,6 +165,10 @@ model User {
 model Membership {
   id             String         @id @default(uuid())
   role           MembershipRole @default(ASSISTENTE)
+  // Quando personalizado = true, vale a lista "permissoes" marcada pelo
+  // administrador; senão, as permissões padrão do papel (src/auth/permissoes.ts).
+  personalizado  Boolean        @default(false)
+  permissoes     String[]       @default([])
   organizationId String
   userId         String
   createdAt      DateTime       @default(now())
@@ -199,6 +203,7 @@ model Client {
   documentos   Documento[]
   obrigacoesFiscais ObrigacaoFiscal[]
   certificados CertificadoDigital[]
+  documentosFiscais DocumentoFiscal[]
 
   @@unique([organizationId, cnpjCpf])
   @@index([organizationId])
@@ -405,4 +410,66 @@ model ConfiguracaoPlataforma {
   updatedAt     DateTime @updatedAt
 
   @@map("configuracao_plataforma")
+}
+
+enum ModeloDocFiscal {
+  NFE
+  NFCE
+  CTE
+  CTEOS
+  MDFE
+  NFSE
+  EVENTO
+  DESCONHECIDO
+}
+
+enum FormatoArquivoFiscal {
+  XML
+  PDF
+}
+
+enum DirecaoDocFiscal {
+  ENTRADA
+  SAIDA
+}
+
+// Arquivo fiscal enviado pelo escritório: XML (NF-e, NFC-e, CT-e, MDF-e,
+// NFS-e, eventos) ou a representação gráfica em PDF (DANFE, DANFC-e,
+// DACTE, DAMDFE). Os dados vêm da leitura do XML; o PDF é ligado ao XML
+// pela chave de acesso. "hash" evita importar o mesmo arquivo duas vezes.
+model DocumentoFiscal {
+  id                String               @id @default(uuid())
+  organizationId    String
+  clientId          String?
+  modelo            ModeloDocFiscal
+  formato           FormatoArquivoFiscal
+  direcao           DirecaoDocFiscal?
+  chaveAcesso       String?
+  numero            String?
+  serie             String?
+  dataEmissao       DateTime?
+  emitenteDoc       String?
+  emitenteNome      String?
+  destinatarioDoc   String?
+  destinatarioNome  String?
+  valorTotal        Decimal?             @db.Decimal(14, 2)
+  naturezaOperacao  String?
+  protocolo         String?
+  situacao          String? // AUTORIZADA, CANCELADA, DENEGADA, SEM_PROTOCOLO
+  descricaoEvento   String?
+  nomeArquivo       String
+  mimeType          String
+  tamanhoBytes      Int
+  hash              String
+  conteudo          Bytes
+  createdAt         DateTime             @default(now())
+
+  client Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, hash])
+  @@index([organizationId, modelo])
+  @@index([organizationId, chaveAcesso])
+  @@index([organizationId, dataEmissao])
+  @@index([clientId])
+  @@map("documentos_fiscais")
 }

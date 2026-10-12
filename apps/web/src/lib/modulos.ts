@@ -13,6 +13,8 @@ import {
   FileCheck2,
   FileCode2,
   FilePenLine,
+  FolderUp,
+  UsersRound,
   FileSpreadsheet,
   FileText,
   HandCoins,
@@ -56,6 +58,8 @@ export interface Modulo {
   recursos?: string[];
   // ids do catálogo de integrações da API (/integracoes/catalogo)
   conectores?: string[];
+  // Permissão exigida para ver a aba (src/auth/permissoes.ts na API).
+  perm?: string;
 }
 
 export interface GrupoModulos {
@@ -68,29 +72,30 @@ export const GRUPOS: GrupoModulos[] = [
     grupo: 'Visão geral',
     modulos: [
       { slug: 'painel', titulo: 'Painel', icone: LayoutDashboard, href: '/dashboard', etapa: 1, resumo: 'Indicadores do escritório.' },
-      { slug: 'agenda', titulo: 'Agenda', icone: CalendarDays, href: '/dashboard/agenda', etapa: 1, resumo: 'Compromissos com clientes.' },
-      { slug: 'obrigacoes', titulo: 'Obrigações', icone: Kanban, href: '/dashboard/obrigacoes', etapa: 1, resumo: 'Kanban das obrigações fiscais.' },
-      { slug: 'calendario', titulo: 'Agenda inteligente', icone: CalendarClock, href: '/dashboard/calendario', etapa: 1, resumo: 'Obrigações do mês geradas por regime, com feriados e plano da IA.' },
-      { slug: 'assistente', titulo: 'Assistente IA', icone: Bot, href: '/dashboard/assistente', etapa: 1, resumo: 'IA no painel.' },
-      { slug: 'modelos', titulo: 'Modelos com IA', icone: FilePenLine, href: '/dashboard/modelos', etapa: 1, resumo: '200 modelos de documentos contábeis preenchidos pela IA.' },
+      { slug: 'agenda', perm: 'obrigacoes', titulo: 'Agenda', icone: CalendarDays, href: '/dashboard/agenda', etapa: 1, resumo: 'Compromissos com clientes.' },
+      { slug: 'obrigacoes', perm: 'obrigacoes', titulo: 'Obrigações', icone: Kanban, href: '/dashboard/obrigacoes', etapa: 1, resumo: 'Kanban das obrigações fiscais.' },
+      { slug: 'calendario', perm: 'obrigacoes', titulo: 'Agenda inteligente', icone: CalendarClock, href: '/dashboard/calendario', etapa: 1, resumo: 'Obrigações do mês geradas por regime, com feriados e plano da IA.' },
+      { slug: 'assistente', perm: 'ia', titulo: 'Assistente IA', icone: Bot, href: '/dashboard/assistente', etapa: 1, resumo: 'IA no painel.' },
+      { slug: 'modelos', perm: 'ia', titulo: 'Modelos com IA', icone: FilePenLine, href: '/dashboard/modelos', etapa: 1, resumo: '200 modelos de documentos contábeis preenchidos pela IA.' },
     ],
   },
   {
     grupo: 'Cadastros',
     modulos: [
-      { slug: 'clientes', titulo: 'Clientes', icone: Building2, href: '/dashboard/clients', etapa: 1, resumo: 'Empresas atendidas.' },
-      { slug: 'importar', titulo: 'Importar clientes', icone: Upload, href: '/dashboard/importar', etapa: 1, resumo: 'Cadastro em lote por CNPJ.' },
-      { slug: 'funcionarios', titulo: 'Funcionários', icone: Users, href: '/dashboard/funcionarios', etapa: 1, resumo: 'Funcionários de todos os clientes.' },
-      { slug: 'documentos', titulo: 'Documentos', icone: Paperclip, href: '/dashboard/documentos', etapa: 1, resumo: 'Arquivos de todos os clientes.' },
-      { slug: 'certificados', titulo: 'Certificados A1', icone: ShieldCheck, href: '/dashboard/certificados', etapa: 1, resumo: 'Cofre de certificados digitais.' },
+      { slug: 'clientes', perm: 'clientes.ver', titulo: 'Clientes', icone: Building2, href: '/dashboard/clients', etapa: 1, resumo: 'Empresas atendidas.' },
+      { slug: 'importar', perm: 'clientes.gerenciar', titulo: 'Importar clientes', icone: Upload, href: '/dashboard/importar', etapa: 1, resumo: 'Cadastro em lote por CNPJ.' },
+      { slug: 'funcionarios', perm: 'pessoal', titulo: 'Funcionários', icone: Users, href: '/dashboard/funcionarios', etapa: 1, resumo: 'Funcionários de todos os clientes.' },
+      { slug: 'documentos', perm: 'documentos', titulo: 'Documentos', icone: Paperclip, href: '/dashboard/documentos', etapa: 1, resumo: 'Arquivos de todos os clientes.' },
+      { slug: 'certificados', perm: 'certificados', titulo: 'Certificados A1', icone: ShieldCheck, href: '/dashboard/certificados', etapa: 1, resumo: 'Cofre de certificados digitais.' },
     ],
   },
   {
     grupo: 'Fiscal e SEFAZ',
     modulos: [
-      { slug: 'notas', titulo: 'NF-e e NFC-e', icone: Receipt, href: '/dashboard/notas', etapa: 1, resumo: 'Notas emitidas via SEFAZ.', conectores: ['focus-nfe'] },
+      { slug: 'arquivo-fiscal', perm: 'fiscal.ver', titulo: 'Arquivo fiscal (XML e PDF)', icone: FolderUp, href: '/dashboard/arquivo-fiscal', etapa: 1, resumo: 'Upload de XML e PDF de NF-e, NFC-e, CT-e, MDF-e e NFS-e.' },
+      { slug: 'notas', perm: 'fiscal.ver', titulo: 'NF-e e NFC-e', icone: Receipt, href: '/dashboard/notas', etapa: 1, resumo: 'Notas emitidas via SEFAZ.', conectores: ['focus-nfe'] },
       {
-        slug: 'nfse',
+        slug: 'nfse', perm: 'fiscal.ver',
         titulo: 'NFS-e',
         icone: FileText,
         etapa: 3,
@@ -99,7 +104,7 @@ export const GRUPOS: GrupoModulos[] = [
         conectores: ['nuvem-fiscal'],
       },
       {
-        slug: 'notas-recebidas',
+        slug: 'notas-recebidas', perm: 'fiscal.ver',
         titulo: 'Notas recebidas',
         icone: Download,
         etapa: 3,
@@ -108,7 +113,7 @@ export const GRUPOS: GrupoModulos[] = [
         conectores: ['sefaz-dfe', 'nuvem-fiscal'],
       },
       {
-        slug: 'apuracao',
+        slug: 'apuracao', perm: 'fiscal.ver',
         titulo: 'Apuração de impostos',
         icone: Calculator,
         etapa: 3,
@@ -116,7 +121,7 @@ export const GRUPOS: GrupoModulos[] = [
         recursos: ['Apuração por regime tributário', 'Créditos e débitos de ICMS', 'Lucro Presumido trimestral', 'Memória de cálculo exportável'],
       },
       {
-        slug: 'sped',
+        slug: 'sped', perm: 'fiscal.ver',
         titulo: 'SPED Fiscal',
         icone: FileSpreadsheet,
         etapa: 4,
@@ -129,7 +134,7 @@ export const GRUPOS: GrupoModulos[] = [
     grupo: 'Receita Federal',
     modulos: [
       {
-        slug: 'simples',
+        slug: 'simples', perm: 'fiscal.ver',
         titulo: 'Simples Nacional',
         icone: Landmark,
         etapa: 3,
@@ -138,7 +143,7 @@ export const GRUPOS: GrupoModulos[] = [
         conectores: ['serpro-integra-contador'],
       },
       {
-        slug: 'mei',
+        slug: 'mei', perm: 'fiscal.ver',
         titulo: 'MEI',
         icone: Store,
         etapa: 3,
@@ -147,7 +152,7 @@ export const GRUPOS: GrupoModulos[] = [
         conectores: ['serpro-integra-contador'],
       },
       {
-        slug: 'dctfweb',
+        slug: 'dctfweb', perm: 'fiscal.ver',
         titulo: 'DCTFWeb',
         icone: FileCheck2,
         etapa: 3,
@@ -156,7 +161,7 @@ export const GRUPOS: GrupoModulos[] = [
         conectores: ['serpro-integra-contador'],
       },
       {
-        slug: 'certidoes',
+        slug: 'certidoes', perm: 'fiscal.ver',
         titulo: 'Certidões (CND)',
         icone: BadgeCheck,
         etapa: 3,
@@ -165,7 +170,7 @@ export const GRUPOS: GrupoModulos[] = [
         conectores: ['serpro-integra-contador'],
       },
       {
-        slug: 'caixa-postal',
+        slug: 'caixa-postal', perm: 'fiscal.ver',
         titulo: 'Caixa postal e-CAC',
         icone: Mail,
         etapa: 3,
@@ -174,7 +179,7 @@ export const GRUPOS: GrupoModulos[] = [
         conectores: ['serpro-integra-contador'],
       },
       {
-        slug: 'parcelamentos',
+        slug: 'parcelamentos', perm: 'fiscal.ver',
         titulo: 'Parcelamentos',
         icone: Layers,
         etapa: 3,
@@ -188,7 +193,7 @@ export const GRUPOS: GrupoModulos[] = [
     grupo: 'Trabalhista',
     modulos: [
       {
-        slug: 'folha',
+        slug: 'folha', perm: 'pessoal',
         titulo: 'Folha de pagamento',
         icone: Banknote,
         etapa: 2,
@@ -197,7 +202,7 @@ export const GRUPOS: GrupoModulos[] = [
         conectores: ['esocial'],
       },
       {
-        slug: 'esocial',
+        slug: 'esocial', perm: 'pessoal',
         titulo: 'eSocial',
         icone: Network,
         etapa: 2,
@@ -206,7 +211,7 @@ export const GRUPOS: GrupoModulos[] = [
         conectores: ['esocial'],
       },
       {
-        slug: 'inss',
+        slug: 'inss', perm: 'pessoal',
         titulo: 'INSS',
         icone: HeartPulse,
         etapa: 2,
@@ -215,7 +220,7 @@ export const GRUPOS: GrupoModulos[] = [
         conectores: ['inss-previdencia', 'esocial'],
       },
       {
-        slug: 'fgts',
+        slug: 'fgts', perm: 'pessoal',
         titulo: 'FGTS Digital',
         icone: PiggyBank,
         etapa: 2,
@@ -224,7 +229,7 @@ export const GRUPOS: GrupoModulos[] = [
         conectores: ['fgts-digital', 'esocial'],
       },
       {
-        slug: 'ferias-rescisoes',
+        slug: 'ferias-rescisoes', perm: 'pessoal',
         titulo: 'Férias e rescisões',
         icone: Palmtree,
         etapa: 2,
@@ -233,7 +238,7 @@ export const GRUPOS: GrupoModulos[] = [
         conectores: ['esocial'],
       },
       {
-        slug: 'pro-labore',
+        slug: 'pro-labore', perm: 'pessoal',
         titulo: 'Pró-labore',
         icone: Crown,
         etapa: 2,
@@ -247,7 +252,7 @@ export const GRUPOS: GrupoModulos[] = [
     grupo: 'Contábil',
     modulos: [
       {
-        slug: 'plano-contas',
+        slug: 'plano-contas', perm: 'clientes.ver',
         titulo: 'Plano de contas',
         icone: ListTree,
         etapa: 4,
@@ -255,7 +260,7 @@ export const GRUPOS: GrupoModulos[] = [
         recursos: ['Modelo padrão pronto', 'Mapeamento para o referencial da Receita', 'Personalização por cliente'],
       },
       {
-        slug: 'lancamentos-contabeis',
+        slug: 'lancamentos-contabeis', perm: 'clientes.ver',
         titulo: 'Lançamentos contábeis',
         icone: ArrowLeftRight,
         etapa: 4,
@@ -263,7 +268,7 @@ export const GRUPOS: GrupoModulos[] = [
         recursos: ['Lançamento manual e por lote', 'Integração automática com notas e folha', 'Importação de extrato (OFX)', 'Conciliação bancária'],
       },
       {
-        slug: 'balancete',
+        slug: 'balancete', perm: 'clientes.ver',
         titulo: 'Balancete',
         icone: Scale,
         etapa: 4,
@@ -271,7 +276,7 @@ export const GRUPOS: GrupoModulos[] = [
         recursos: ['Balancete mensal e acumulado', 'Razão e diário', 'Exportação em PDF e Excel'],
       },
       {
-        slug: 'demonstracoes',
+        slug: 'demonstracoes', perm: 'clientes.ver',
         titulo: 'DRE e Balanço',
         icone: PieChart,
         etapa: 4,
@@ -279,7 +284,7 @@ export const GRUPOS: GrupoModulos[] = [
         recursos: ['DRE', 'Balanço patrimonial', 'Comparativo entre períodos', 'Indicadores financeiros'],
       },
       {
-        slug: 'ecd-ecf',
+        slug: 'ecd-ecf', perm: 'clientes.ver',
         titulo: 'ECD e ECF',
         icone: FileCode2,
         etapa: 4,
@@ -291,9 +296,9 @@ export const GRUPOS: GrupoModulos[] = [
   {
     grupo: 'Financeiro',
     modulos: [
-      { slug: 'financeiro', titulo: 'Contas a pagar e receber', icone: Wallet, href: '/dashboard/financeiro', etapa: 1, resumo: 'Lançamentos de todos os clientes.', conectores: ['asaas'] },
+      { slug: 'financeiro', perm: 'financeiro', titulo: 'Contas a pagar e receber', icone: Wallet, href: '/dashboard/financeiro', etapa: 1, resumo: 'Lançamentos de todos os clientes.', conectores: ['asaas'] },
       {
-        slug: 'honorarios',
+        slug: 'honorarios', perm: 'financeiro',
         titulo: 'Honorários',
         icone: HandCoins,
         etapa: 4,
@@ -308,9 +313,9 @@ export const GRUPOS: GrupoModulos[] = [
     modulos: [
       { slug: 'consultas', titulo: 'Consultas CNPJ e CEP', icone: Search, href: '/dashboard/consultas', etapa: 1, resumo: 'Dados públicos da Receita e dos Correios.', conectores: ['brasilapi-cnpj', 'brasilapi-cep'] },
       { slug: 'indices', titulo: 'Índices econômicos', icone: TrendingUp, href: '/dashboard/indices', etapa: 1, resumo: 'SELIC, CDI, IPCA, INPC e IGP-M.', conectores: ['bcb-sgs'] },
-      { slug: 'integracoes', titulo: 'Integrações', icone: Plug, href: '/dashboard/integracoes', etapa: 1, resumo: 'Conexão com os órgãos.' },
+      { slug: 'integracoes', perm: 'integracoes', titulo: 'Integrações', icone: Plug, href: '/dashboard/integracoes', etapa: 1, resumo: 'Conexão com os órgãos.' },
       {
-        slug: 'relatorios',
+        slug: 'relatorios', perm: 'clientes.ver',
         titulo: 'Relatórios',
         icone: BarChart3,
         etapa: 4,
@@ -322,6 +327,7 @@ export const GRUPOS: GrupoModulos[] = [
   {
     grupo: 'Escritório',
     modulos: [
+      { slug: 'equipe', perm: 'equipe', titulo: 'Equipe e permissões', icone: UsersRound, href: '/dashboard/equipe', etapa: 1, resumo: 'Usuários do escritório e o que cada um pode fazer.' },
       { slug: 'configuracoes', titulo: 'Configurações', icone: Settings, href: '/dashboard/settings', etapa: 1, resumo: 'Senha e chaves de integração.' },
     ],
   },

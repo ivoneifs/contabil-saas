@@ -12,11 +12,13 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { PermissoesGuard, Requer } from '../auth/permissoes.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtPayload } from '../auth/jwt-payload.interface';
 import { CertificadosService } from './certificados.service';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissoesGuard)
+@Requer('certificados')
 @Controller('certificados')
 export class CertificadosController {
   constructor(private readonly certificadosService: CertificadosService) {}

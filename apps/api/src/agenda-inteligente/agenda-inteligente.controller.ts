@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { IsString, Matches } from 'class-validator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { PermissoesGuard, Requer } from '../auth/permissoes.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtPayload } from '../auth/jwt-payload.interface';
 import { AgendaInteligenteService } from './agenda-inteligente.service';
@@ -11,7 +12,8 @@ class GerarDto {
   competencia: string;
 }
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissoesGuard)
+@Requer('obrigacoes')
 @Controller('agenda-inteligente')
 export class AgendaInteligenteController {
   constructor(private readonly service: AgendaInteligenteService) {}

@@ -146,6 +146,23 @@ export class AuthService {
     return { success: true };
   }
 
+  async eu(payload: JwtPayload) {
+    const [user, org] = await Promise.all([
+      this.prisma.user.findUnique({ where: { id: payload.sub }, select: { name: true, email: true } }),
+      payload.organizationId
+        ? this.prisma.organization.findUnique({ where: { id: payload.organizationId }, select: { id: true, name: true, acessoAte: true } })
+        : null,
+    ]);
+    return {
+      nome: user?.name ?? '',
+      email: user?.email ?? payload.email,
+      papel: payload.role,
+      isSuperAdmin: payload.isSuperAdmin,
+      permissoes: payload.permissoes ?? [],
+      escritorio: org,
+    };
+  }
+
   // Token para o Super Admin abrir o painel de um escritório (suporte).
   tokenDeSuporte(superAdmin: { id: string; email: string }, org: { id: string; name: string }) {
     return this.issueTokenResponse(superAdmin.id, superAdmin.email, org.id, org.name, MembershipRole.ADMIN, true);
