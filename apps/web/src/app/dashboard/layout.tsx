@@ -207,8 +207,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const inicial = ((eu?.nome || usuario.email)[0] ?? 'G').toUpperCase();
 
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-900">
-      <aside className={`sticky top-0 hidden h-screen w-64 shrink-0 flex-col md:flex ${FUNDO}`}>
+    <div className="flex min-h-screen bg-slate-50 text-slate-900 print:bg-white">
+      <aside className={`sticky top-0 hidden h-screen w-64 shrink-0 flex-col md:flex print:!hidden ${FUNDO}`}>
         <Logo nome={plataforma.nomeSistema} />
         <Navegacao superAdmin={superAdmin} permissoes={eu?.permissoes ?? null} />
       </aside>
@@ -233,7 +233,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       <div className="flex min-w-0 flex-1 flex-col">
         {suporte && (
-          <div className="flex flex-wrap items-center justify-center gap-3 bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-sm text-white">
+          <div className="flex flex-wrap items-center justify-center gap-3 bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-sm text-white print:hidden">
             <span>
               Modo suporte: você está no painel de <b>{suporte}</b>.
             </span>
@@ -242,7 +242,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </button>
           </div>
         )}
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-slate-200/80 bg-white/80 px-4 backdrop-blur lg:px-8">
+        <header className="sticky top-0 z-30 flex h-16 print:hidden items-center justify-between gap-3 border-b border-slate-200/80 bg-white/80 px-4 backdrop-blur lg:px-8">
           <div className="flex min-w-0 items-center gap-2">
             <button
               type="button"
@@ -281,7 +281,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             )}
           </div>
         </header>
-        <div className="flex-1 px-4 py-6 lg:px-8">
+        <div className="flex-1 px-4 py-6 lg:px-8 print:p-0">
           <EuContexto.Provider value={eu}>{children}</EuContexto.Provider>
         </div>
       </div>

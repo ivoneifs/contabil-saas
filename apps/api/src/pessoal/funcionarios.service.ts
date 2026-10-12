@@ -2,10 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateFuncionarioDto } from './dto/create-funcionario.dto';
 import { UpdateFuncionarioDto } from './dto/update-funcionario.dto';
+import { EsocialService } from '../folha/esocial.service';
 
 @Injectable()
 export class FuncionariosService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly esocial: EsocialService,
+  ) {}
 
   async create(organizationId: string, dto: CreateFuncionarioDto) {
     const client = await this.prisma.client.findFirst({
@@ -15,17 +19,18 @@ export class FuncionariosService {
       throw new NotFoundException('Cliente não encontrado.');
     }
 
-    return this.prisma.funcionario.create({
+    const { dataAdmissao, dataNascimento, ...resto } = dto;
+    const f = await this.prisma.funcionario.create({
       data: {
+        ...resto,
         organizationId,
-        clientId: dto.clientId,
-        nome: dto.nome,
-        cpf: dto.cpf,
-        cargo: dto.cargo,
-        salarioBase: dto.salarioBase,
-        dataAdmissao: new Date(dto.dataAdmissao),
+        cpf: dto.cpf.replace(/\D/g, ''),
+        dataAdmissao: new Date(dataAdmissao),
+        ...(dataNascimento ? { dataNascimento: new Date(dataNascimento) } : {}),
       },
     });
+    await this.esocial.admissao(f);
+    return f;
   }
 
   findAll(organizationId: string, clientId?: string) {
@@ -44,16 +49,21 @@ export class FuncionariosService {
   }
 
   async update(organizationId: string, id: string, dto: UpdateFuncionarioDto) {
-    await this.findOne(organizationId, id);
-    const { dataAdmissao, dataDemissao, ...rest } = dto;
-    return this.prisma.funcionario.update({
+    const antes = await this.findOne(organizationId, id);
+    const { dataAdmissao, dataDemissao, dataNascimento, clientId: _ignorado, ...rest } = dto;
+    const f = await this.prisma.funcionario.update({
       where: { id },
       data: {
         ...rest,
+        ...(rest.cpf ? { cpf: rest.cpf.replace(/\D/g, '') } : {}),
         ...(dataAdmissao ? { dataAdmissao: new Date(dataAdmissao) } : {}),
-        ...(dataDemissao ? { dataDemissao: new Date(dataDemissao) } : {}),
+        ...(dataNascimento ? { dataNascimento: new Date(dataNascimento) } : {}),
+        // dataDemissao: string vazia reativa o funcionário
+        ...(dataDemissao !== undefined ? { dataDemissao: dataDemissao ? new Date(dataDemissao) : null } : {}),
       },
     });
+    if (f.dataDemissao && !antes.dataDemissao) await this.esocial.desligamento({ ...f, dataDemissao: f.dataDemissao });
+    return f;
   }
 
   async remove(organizationId: string, id: string) {

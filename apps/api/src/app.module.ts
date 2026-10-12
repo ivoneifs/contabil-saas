@@ -20,6 +20,7 @@ import { IaModule } from './ia/ia.module';
 import { PlataformaModule } from './plataforma/plataforma.module';
 import { DocumentosFiscaisModule } from './documentos-fiscais/documentos-fiscais.module';
 import { EquipeModule } from './equipe/equipe.module';
+import { FolhaModule } from './folha/folha.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -45,6 +46,7 @@ import { AppController } from './app.controller';
     PlataformaModule,
     DocumentosFiscaisModule,
     EquipeModule,
+    FolhaModule,
   ],
   controllers: [AppController],
 })

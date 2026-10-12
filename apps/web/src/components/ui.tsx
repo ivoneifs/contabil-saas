@@ -24,7 +24,7 @@ export function Indicador({ rotulo, valor, detalhe, tom = 'slate' }: { rotulo: s
   return (
     <Card>
       <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{rotulo}</p>
-      <p className={`mt-2 text-3xl font-semibold tabular-nums ${cor}`}>{valor}</p>
+      <p className={`mt-2 whitespace-nowrap text-[clamp(1.25rem,2vw,1.875rem)] font-semibold tabular-nums ${cor}`}>{valor}</p>
       {detalhe && <p className="mt-1 text-xs text-slate-500">{detalhe}</p>}
     </Card>
   );
@@ -167,3 +167,5 @@ export function Campo({ rotulo, children, dica }: { rotulo: string; children: Re
     </label>
   );
 }
+
+export const competenciaBR = (c: string) => `${c.slice(5, 7)}/${c.slice(0, 4)}`;
