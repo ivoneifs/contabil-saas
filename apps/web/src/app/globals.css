@@ -88,3 +88,8 @@ body {
   .lp-rise, .lp-pulse, .lp-scan, .lp-orbit { animation: none; }
   .lp-reveal { opacity: 1; transform: none; transition: none; }
 }
+
+@media print {
+  @page { size: A4; margin: 12mm; }
+  .holerite { break-inside: avoid; }
+}

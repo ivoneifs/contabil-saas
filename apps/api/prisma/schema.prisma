@@ -206,6 +206,8 @@ model Client {
   obrigacoesFiscais ObrigacaoFiscal[]
   certificados CertificadoDigital[]
   documentosFiscais DocumentoFiscal[]
+  folhas            FolhaPagamento[]
+  eventosEsocial    EventoEsocial[]
 
   @@unique([organizationId, cnpjCpf])
   @@index([organizationId])
@@ -273,6 +275,19 @@ model Funcionario {
   salarioBase    Decimal   @db.Decimal(12, 2)
   dataAdmissao   DateTime
   dataDemissao   DateTime?
+  // Departamento pessoal (Etapa 2)
+  vinculo        VinculoTrabalho @default(EMPREGADO)
+  matricula      String?
+  pis            String?
+  cbo            String?
+  dataNascimento DateTime?
+  dependentesIrrf Int      @default(0)
+  jornadaMensal  Int       @default(220)
+  valeTransporte Boolean   @default(false)
+  pensaoAlimenticia Decimal? @db.Decimal(12, 2)
+  email          String?
+  itensFolha     ItemFolha[]
+  calculos       CalculoTrabalhista[]
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -474,4 +489,116 @@ model DocumentoFiscal {
   @@index([organizationId, dataEmissao])
   @@index([clientId])
   @@map("documentos_fiscais")
+}
+
+enum VinculoTrabalho {
+  EMPREGADO
+  APRENDIZ
+  SOCIO
+  ESTAGIARIO
+}
+
+enum StatusFolha {
+  ABERTA
+  FECHADA
+}
+
+// Folha mensal de um cliente. Os valores de cada pessoa ficam em ItemFolha.
+model FolhaPagamento {
+  id             String      @id @default(uuid())
+  organizationId String
+  clientId       String
+  competencia    String // AAAA-MM
+  status         StatusFolha @default(ABERTA)
+  totalBruto     Decimal     @default(0) @db.Decimal(14, 2)
+  totalInss      Decimal     @default(0) @db.Decimal(14, 2)
+  totalIrrf      Decimal     @default(0) @db.Decimal(14, 2)
+  totalFgts      Decimal     @default(0) @db.Decimal(14, 2)
+  totalLiquido   Decimal     @default(0) @db.Decimal(14, 2)
+  fechadaEm      DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  client Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  itens  ItemFolha[]
+
+  @@unique([clientId, competencia])
+  @@index([organizationId, competencia])
+  @@map("folhas_pagamento")
+}
+
+// Uma pessoa na folha: lançamentos do mês (entrada) e o cálculo (saída).
+model ItemFolha {
+  id            String   @id @default(uuid())
+  folhaId       String
+  funcionarioId String
+  lancamentos   Json // horasExtras50, horasExtras100, faltasDias, outrosProventos, outrosDescontos
+  resultado     Json // rubricas e bases
+  bruto         Decimal  @db.Decimal(12, 2)
+  inss          Decimal  @db.Decimal(12, 2)
+  irrf          Decimal  @db.Decimal(12, 2)
+  fgts          Decimal  @db.Decimal(12, 2)
+  liquido       Decimal  @db.Decimal(12, 2)
+  updatedAt     DateTime @updatedAt
+
+  folha       FolhaPagamento @relation(fields: [folhaId], references: [id], onDelete: Cascade)
+  funcionario Funcionario    @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
+
+  @@unique([folhaId, funcionarioId])
+  @@map("itens_folha")
+}
+
+enum TipoCalculoTrabalhista {
+  FERIAS
+  RESCISAO
+  DECIMO_TERCEIRO
+}
+
+// Férias, rescisões e 13º calculados e guardados (recibo/termo).
+model CalculoTrabalhista {
+  id             String                 @id @default(uuid())
+  organizationId String
+  funcionarioId  String
+  tipo           TipoCalculoTrabalhista
+  parametros     Json
+  resultado      Json
+  liquido        Decimal                @db.Decimal(12, 2)
+  createdAt      DateTime               @default(now())
+
+  funcionario Funcionario @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, tipo])
+  @@map("calculos_trabalhistas")
+}
+
+enum StatusEventoEsocial {
+  PENDENTE
+  ENVIADO
+  DISPENSADO
+}
+
+// Eventos do eSocial que o escritório precisa transmitir, gerados a partir
+// de admissões, desligamentos e folhas fechadas. O envio é registrado com o
+// número do recibo.
+model EventoEsocial {
+  id             String              @id @default(uuid())
+  organizationId String
+  clientId       String
+  funcionarioId  String?
+  evento         String // S-2200, S-2299, S-1200, S-1299…
+  descricao      String
+  referencia     String // competência ou data do fato
+  prazo          DateTime
+  status         StatusEventoEsocial @default(PENDENTE)
+  recibo         String?
+  observacao     String?
+  chave          String // evita duplicar o mesmo evento
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, chave])
+  @@index([organizationId, status])
+  @@map("eventos_esocial")
 }
