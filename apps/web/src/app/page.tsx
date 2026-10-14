@@ -1,35 +1,35 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Instrument_Serif } from 'next/font/google';
+import { Chakra_Petch } from 'next/font/google';
 import {
   ArrowRight,
-  ArrowUpRight,
-  Bot,
   Building2,
   Calculator,
   CalendarClock,
   Check,
+  FileArchive,
   FilePenLine,
+  Fingerprint,
+  History,
   Kanban,
   Landmark,
+  Lock,
   MessageCircle,
   Plus,
-  Receipt,
-  Search,
   ShieldCheck,
   TrendingUp,
   Users,
+  Wallet,
+  X,
+  Zap,
 } from 'lucide-react';
-import FluxoAoVivo from '@/components/landing/fluxo-ao-vivo';
+import RadarHud from '@/components/landing/radar-hud';
+import Calculadora from '@/components/landing/calculadora';
+import VideoTutorial from '@/components/landing/video-tutorial';
 import Reveal from '@/components/landing/reveal';
-import { CONFIG_PADRAO, cssTema, formatarWhatsapp, type ConfigPlataforma } from '@/lib/tema';
+import { CONFIG_PADRAO, formatarWhatsapp, type ConfigPlataforma } from '@/lib/tema';
 
-const serif = Instrument_Serif({
-  subsets: ['latin'],
-  weight: '400',
-  style: ['normal', 'italic'],
-  variable: '--font-serif',
-});
+const display = Chakra_Petch({ subsets: ['latin'], weight: ['500', '600', '700'], variable: '--font-display' });
 
 export const revalidate = 60;
 
@@ -64,61 +64,39 @@ async function carregarConfig(): Promise<ConfigPlataforma> {
 
 const reais = (v: number) => `R$ ${v.toLocaleString('pt-BR')}`;
 
-const RECURSOS = [
-  {
-    icon: CalendarClock,
-    titulo: 'Agenda de obrigações automática',
-    texto:
-      'Um clique gera DAS, FGTS, eSocial, DCTFWeb, EFD-Reinf, PIS/COFINS e IRPJ de cada cliente, conforme o regime, com prazos ajustados a fins de semana e feriados.',
-    grande: true,
-  },
-  {
-    icon: FilePenLine,
-    titulo: '200 modelos com IA',
-    texto:
-      'Contratos, declarações, procurações, cartas, documentos trabalhistas e requerimentos redigidos pela IA com os dados do cliente, prontos para baixar em Word.',
-    grande: true,
-  },
-  {
-    icon: Building2,
-    titulo: 'Carteira importada pelo CNPJ',
-    texto: 'Cole a lista de CNPJs e o sistema cadastra todos com os dados da Receita.',
-  },
-  {
-    icon: Kanban,
-    titulo: 'Obrigações em kanban',
-    texto: 'Pendente, em análise e entregue: a equipe vê o que falta num olhar.',
-  },
-  {
-    icon: Bot,
-    titulo: 'Assistente e plano da semana',
-    texto: 'A IA distribui o trabalho da semana e tira dúvidas sem sair do sistema.',
-  },
-  {
-    icon: ShieldCheck,
-    titulo: 'Cofre de certificados A1',
-    texto: 'Certificados e senhas criptografados, com alerta antes de vencer.',
-  },
-  {
-    icon: Landmark,
-    titulo: 'Pronto para os órgãos',
-    texto:
-      'Integrações preparadas para SERPRO Integra Contador, eSocial, FGTS Digital e SEFAZ: ligam assim que você cadastra a credencial do escritório.',
-    grande: true,
-  },
-  {
-    icon: TrendingUp,
-    titulo: 'Índices e consultas oficiais',
-    texto: 'SELIC, IPCA, INPC, IGP-M e CDI do Banco Central, e consulta completa de CNPJ e CEP.',
-    grande: true,
-  },
+const MODULOS = [
+  { icon: CalendarClock, tag: 'Agenda', titulo: 'Obrigações do mês em um clique', texto: 'DAS, FGTS, eSocial, DCTFWeb, EFD-Reinf, PIS/COFINS e IRPJ de cada cliente, conforme o regime, com prazos ajustados a fins de semana e feriados.', grande: true },
+  { icon: Wallet, tag: 'DP', titulo: 'Folha de pagamento completa', texto: 'Holerites, férias, 13º, rescisões e pró-labore com INSS, IRRF e FGTS pelas tabelas de 2026, e pendências do eSocial.', grande: true },
+  { icon: FilePenLine, tag: 'IA', titulo: '200 modelos com IA', texto: 'Contratos, declarações, procurações e requerimentos com os dados do cliente, em Word.' },
+  { icon: Building2, tag: 'Receita', titulo: 'Carteira pelo CNPJ', texto: 'Cole a lista de CNPJs e os clientes entram com os dados da Receita.' },
+  { icon: FileArchive, tag: 'Fiscal', titulo: 'Arquivo fiscal', texto: 'XML e PDF de NF-e, NFC-e, CT-e, MDF-e e NFS-e, vinculados ao cliente pelo CNPJ.' },
+  { icon: Kanban, tag: 'Fluxo', titulo: 'Obrigações em kanban', texto: 'Pendente, em análise e entregue: a equipe vê o que falta.' },
+  { icon: Landmark, tag: 'Gov', titulo: 'Pronto para os órgãos', texto: 'Integrações preparadas para SERPRO Integra Contador, eSocial, FGTS Digital e SEFAZ, com teste de conexão real.', grande: true },
+  { icon: TrendingUp, tag: 'Índices', titulo: 'Consultas oficiais', texto: 'SELIC, IPCA, IGP-M, CDI e PTAX do Banco Central, NCM, IBGE, status da SEFAZ, CNPJ e CEP.', grande: true },
 ];
 
 const PASSOS = [
-  { n: '01', titulo: 'Fale com a gente', texto: 'Mostramos o sistema ao vivo e configuramos o seu escritório.' },
-  { n: '02', titulo: 'Importe a carteira', texto: 'Cole os CNPJs dos clientes e o cadastro se completa com os dados da Receita.' },
-  { n: '03', titulo: 'Gere o mês', texto: 'Um clique cria as obrigações de todos os clientes; a IA organiza a semana.' },
+  { n: '01', t: 'Fale com a gente', d: 'Mostramos o sistema ao vivo e configuramos o seu escritório.' },
+  { n: '02', t: 'Importe a carteira', d: 'Cole os CNPJs dos clientes e o cadastro se completa com os dados da Receita.' },
+  { n: '03', t: 'Gere o mês', d: 'Um clique cria as obrigações de todos os clientes, e a IA organiza a semana.' },
 ];
+
+const ANTES = [
+  'Planilha de vencimentos por cliente, atualizada à mão',
+  'Folha conferida em calculadora e tabela impressa',
+  'XMLs perdidos em e-mails e pastas',
+  'Certificado A1 vencendo sem ninguém perceber',
+  'Contrato e declaração redigidos do zero',
+];
+const DEPOIS = [
+  'Obrigações geradas pelo regime, com o prazo legal',
+  'INSS, IRRF e FGTS calculados pelas tabelas de 2026',
+  'Arquivo fiscal organizado e vinculado pelo CNPJ',
+  'Cofre A1 criptografado com alerta antes de vencer',
+  '200 modelos preenchidos pela IA em segundos',
+];
+
+const MARQUEE = ['Receita Federal', 'SERPRO Integra Contador', 'eSocial', 'FGTS Digital', 'SEFAZ', 'Banco Central', 'NF-e · NFS-e · CT-e', 'Folha 2026', '200 modelos com IA', 'Cofre A1 AES-256'];
 
 const faq = (preco: string, mensal: string) => [
   { p: 'Preciso instalar alguma coisa?', r: 'Não. O sistema roda no navegador, no computador e no celular. Nós cuidamos da instalação e da configuração.' },
@@ -138,55 +116,55 @@ const faq = (preco: string, mensal: string) => [
   },
 ];
 
+function Rotulo({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.24em] text-[var(--nx-cyan)]">
+      <span className="h-px w-6 bg-[var(--nx-cyan)]" />
+      {children}
+    </p>
+  );
+}
+
 export default async function Home() {
   const cfg = await carregarConfig();
-  const WHATSAPP_EXIBICAO = formatarWhatsapp(cfg.whatsapp);
+  const WHATS = formatarWhatsapp(cfg.whatsapp);
   const zap = (msg: string) => `https://wa.me/${cfg.whatsapp}?text=${encodeURIComponent(msg)}`;
   const ZAP_COMPRAR = zap(`Olá! Vim pelo site e quero contratar o Plano Pro do ${cfg.nomeSistema}.`);
   const ZAP_DEMO = zap(`Olá! Vim pelo site e quero ver uma demonstração do ${cfg.nomeSistema}.`);
+  const ZAP = zap(`Olá! Vim pelo site e quero conhecer o ${cfg.nomeSistema}.`);
   const AVISTA = reais(cfg.precoAVista);
   const PARCELADO = `${cfg.parcelas}x de ${reais(cfg.valorParcela)}`;
-  const PRECO = `${AVISTA} à vista ou ${PARCELADO}`;
   const MENSAL = reais(cfg.valorParcela);
-  const FAQ = faq(PRECO, MENSAL);
+  const FAQ = faq(`${AVISTA} à vista ou ${PARCELADO}`, MENSAL);
   const [marca, ...resto] = cfg.nomeSistema.split(' ');
-  const marcaCompleta = resto.length > 1 ? `${marca} ${resto[0]}` : marca;
-  const sufixo = resto.length > 1 ? resto.slice(1).join(' ') : resto.join(' ');
+  const ext = { target: '_blank', rel: 'noopener noreferrer' } as const;
 
   return (
-    <div className={`lp lp-grain min-h-screen overflow-x-hidden ${serif.variable}`}>
-      <style dangerouslySetInnerHTML={{ __html: cssTema(cfg) }} />
+    <div className={`nx nx-scanlines min-h-screen overflow-x-hidden ${display.variable}`}>
       {/* NAV */}
       <header className="fixed inset-x-0 top-0 z-50">
-        <div className="mx-auto max-w-7xl px-5 sm:px-8">
-          <nav className="mt-4 flex h-14 items-center justify-between rounded-2xl border border-white/[0.08] bg-[#05060a]/70 px-4 backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-4 sm:px-8">
+          <nav className="mt-3 flex h-14 items-center justify-between rounded-2xl border border-[var(--nx-line)] bg-[#02040a]/75 px-4 backdrop-blur-xl">
             <Link href="/" className="flex items-center gap-2.5">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[rgb(var(--brand-500))] to-[rgb(var(--accent-500))] shadow-[0_0_24px_rgb(var(--brand-500)/0.6)]">
-                <Calculator size={16} className="text-white" />
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--nx-cyan)] to-[var(--nx-blue)] shadow-[0_0_24px_rgba(62,240,255,0.55)]">
+                <Calculator size={16} className="text-[#001218]" />
               </span>
-              <span className="font-semibold tracking-tight">
-                {marcaCompleta} <span className="hidden text-[#8b90a6] sm:inline">{sufixo}</span>
+              <span className="nx-display text-lg font-semibold">
+                {marca}
+                <span className="hidden text-[var(--nx-cyan)] sm:inline"> {resto.join(' ')}</span>
               </span>
             </Link>
-            <div className="hidden items-center gap-7 text-sm text-[#8b90a6] md:flex">
-              <a href="#recursos" className="transition-colors hover:text-white">Recursos</a>
+            <div className="hidden items-center gap-7 text-sm text-[var(--nx-mute)] lg:flex">
+              <a href="#modulos" className="transition-colors hover:text-white">Módulos</a>
               <a href="#como-funciona" className="transition-colors hover:text-white">Como funciona</a>
+              <a href="#calculadora" className="transition-colors hover:text-white">Calculadora</a>
               <a href="#planos" className="transition-colors hover:text-white">Preço</a>
-              <a href="#seguranca" className="transition-colors hover:text-white">Segurança</a>
               <a href="#faq" className="transition-colors hover:text-white">Dúvidas</a>
             </div>
             <div className="flex items-center gap-2">
-              <Link href="/login" className="hidden px-3 py-2 text-sm text-[#8b90a6] hover:text-white sm:block">
-                Entrar
-              </Link>
-              <a
-                href={ZAP_COMPRAR}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group inline-flex items-center gap-1.5 rounded-xl bg-[rgb(var(--signal))] px-4 py-2 text-sm font-semibold text-[rgb(var(--signal-ink))] transition hover:shadow-[0_0_30px_rgb(var(--signal)/0.5)]"
-              >
-                Quero o sistema
-                <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+              <Link href="/login" className="hidden px-3 py-2 text-sm text-[var(--nx-mute)] hover:text-white sm:block">Entrar</Link>
+              <a href={ZAP_DEMO} {...ext} className="nx-btn inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold">
+                Ver demonstração <ArrowRight size={15} />
               </a>
             </div>
           </nav>
@@ -194,71 +172,52 @@ export default async function Home() {
       </header>
 
       {/* HERO */}
-      <section className="relative pb-24 pt-36 sm:pt-44">
-        <div className="lp-grid absolute inset-0" />
-        <div className="absolute left-1/2 top-[-280px] h-[620px] w-[1100px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(var(--brand-500)/0.28),transparent)] blur-3xl" />
-        <div className="relative mx-auto grid max-w-7xl items-center gap-16 px-5 sm:px-8 lg:grid-cols-[1.1fr_0.9fr]">
-          <div>
-            <p className="lp-rise inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-[#8b90a6] sm:text-[11px] sm:tracking-[0.2em]">
-              <span className="lp-pulse h-1.5 w-1.5 rounded-full bg-[rgb(var(--signal))]" />
-              Contabilidade com inteligência artificial
+      <section className="relative overflow-hidden pb-20 pt-32 sm:pt-40">
+        <div className="nx-grid absolute inset-0" />
+        <div className="absolute left-1/2 top-[-320px] h-[700px] w-[1200px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(43,107,255,0.35),transparent)] blur-3xl" />
+        <div className="nx-floor absolute inset-x-[-20%] bottom-0 h-[45%] opacity-40" />
+        <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-14 px-5 sm:px-8 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="min-w-0">
+            <p className="lp-rise inline-flex items-center gap-2 rounded-full border border-[var(--nx-cyan)]/30 bg-[var(--nx-cyan)]/[0.06] px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--nx-cyan)] sm:text-[11px]">
+              <Zap size={12} /> Inteligência artificial para escritórios contábeis
             </p>
-            <h1
-              className="lp-rise mt-7 font-[family-name:var(--font-serif)] text-[clamp(3rem,7.5vw,6.5rem)] leading-[0.92] tracking-[-0.02em]"
-              style={{ animationDelay: '120ms' }}
-            >
-              Nenhuma obrigação
-              <br />
-              <em className="bg-gradient-to-r from-white via-[rgb(var(--brand-300))] to-[rgb(var(--brand-500))] bg-clip-text text-transparent">esquecida.</em>
-              <span className="block text-white/35">Nenhum cliente multado.</span>
+            <h1 className="lp-rise nx-display mt-7 text-[clamp(2.5rem,5.2vw,4.7rem)] font-bold leading-[0.98]" style={{ animationDelay: '120ms' }}>
+              Nenhuma obrigação <span className="nx-glow">passa do prazo.</span>
             </h1>
-            <p className="lp-rise mt-7 max-w-xl text-lg leading-relaxed text-[#8b90a6]" style={{ animationDelay: '240ms' }}>
-              O {cfg.nomeSistema} monta a agenda de obrigações de cada cliente, ajusta os prazos aos feriados, organiza a semana da
-              equipe e redige seus documentos. Você cuida dos clientes; o sistema cuida dos prazos.
+            <p className="lp-rise mt-7 max-w-xl text-lg leading-relaxed text-[var(--nx-mute)]" style={{ animationDelay: '240ms' }}>
+              Agenda fiscal automática, folha pelas tabelas de 2026, arquivo de notas e 200 modelos com IA.
+              <span className="text-white"> Sua equipe entrega; o sistema vigia os prazos.</span>
             </p>
-            <div className="lp-rise mt-10 flex flex-col gap-3 sm:flex-row sm:items-center" style={{ animationDelay: '360ms' }}>
-              <a
-                href={ZAP_COMPRAR}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-[rgb(var(--signal))] px-7 py-4 text-base font-semibold text-[rgb(var(--signal-ink))] transition hover:shadow-[0_0_50px_rgb(var(--signal)/0.45)]"
-              >
-                Contratar pelo WhatsApp
-                <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
+            <div className="lp-rise mt-10 flex flex-col gap-3 sm:flex-row" style={{ animationDelay: '360ms' }}>
+              <a href={ZAP_DEMO} {...ext} className="nx-btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl px-7 py-4 text-base font-semibold">
+                Agendar demonstração <ArrowRight size={18} />
               </a>
-              <a
-                href={ZAP_DEMO}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 px-6 py-4 text-base text-white/80 transition hover:border-white/25 hover:bg-white/[0.04]"
-              >
-                Ver demonstração
+              <a href="#como-funciona" className="nx-btn-wa inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl px-6 py-4 text-base font-medium" style={{ borderColor: 'rgba(62,240,255,0.4)', background: 'rgba(62,240,255,0.06)', color: '#e6f0ff' }}>
+                ▶ Ver o tutorial em vídeo
               </a>
             </div>
-            <ul className="lp-rise mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[#8b90a6]" style={{ animationDelay: '480ms' }}>
-              {[`${AVISTA} ou ${PARCELADO}`, '12 meses de suporte', 'Funciona no celular'].map((t) => (
-                <li key={t} className="flex items-center gap-2">
-                  <Check size={15} className="text-[rgb(var(--signal))]" /> {t}
-                </li>
+            <ul className="lp-rise mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[var(--nx-mute)]" style={{ animationDelay: '480ms' }}>
+              {['Sem instalar nada', 'Multiempresa', 'Implantação feita por nós'].map((t) => (
+                <li key={t} className="flex items-center gap-2"><Check size={15} className="text-[var(--nx-cyan)]" /> {t}</li>
               ))}
             </ul>
           </div>
-          <div className="lp-rise" style={{ animationDelay: '300ms' }}>
-            <FluxoAoVivo />
+          <div className="lp-rise min-w-0" style={{ animationDelay: '300ms' }}>
+            <RadarHud />
           </div>
         </div>
       </section>
 
-      {/* FONTES */}
-      <section className="border-y border-white/[0.06] bg-white/[0.015]">
-        <div className="mx-auto flex max-w-7xl flex-col items-center gap-6 px-5 py-8 sm:px-8 md:flex-row md:justify-between">
-          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-white/40">Dados oficiais e integrações</p>
-          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-sm font-medium text-white/55">
-            <span>Receita Federal · CNPJ</span>
-            <span>Banco Central · SGS</span>
-            <span>SERPRO Integra Contador</span>
-            <span>eSocial</span>
-            <span>SEFAZ</span>
+      {/* MARQUEE */}
+      <section className="relative border-y border-[var(--nx-line)] bg-[var(--nx-cyan)]/[0.02] py-5">
+        <div className="flex overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_10%,#000_90%,transparent)]">
+          <div className="nx-marquee flex shrink-0 gap-12 pr-12">
+            {[...MARQUEE, ...MARQUEE].map((m, i) => (
+              <span key={i} className="flex items-center gap-12 whitespace-nowrap font-mono text-xs uppercase tracking-[0.2em] text-white/50">
+                {m}
+                <span className="h-1 w-1 rotate-45 bg-[var(--nx-cyan)]" />
+              </span>
+            ))}
           </div>
         </div>
       </section>
@@ -267,48 +226,48 @@ export default async function Home() {
       <section className="relative py-28">
         <div className="mx-auto max-w-5xl px-5 text-center sm:px-8">
           <Reveal>
-            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[rgb(var(--signal))]">O problema</p>
-            <h2 className="mt-5 font-[family-name:var(--font-serif)] text-[clamp(2.2rem,5vw,4rem)] leading-[1.02]">
-              Uma guia atrasada custa multa ao cliente.
+            <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-[var(--nx-amber)]">⚠ Alerta de risco</p>
+            <h2 className="nx-display mt-5 text-[clamp(2.1rem,5vw,4rem)] font-semibold leading-[1.02]">
+              Uma guia atrasada vira multa.
               <br />
-              <em className="text-white/40">E a confiança no escritório.</em>
+              <span className="text-white/35">E multa vira cliente perdido.</span>
             </h2>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-[#8b90a6]">
-              Planilhas de prazos, calendário na parede, cadastro digitado à mão e documentos refeitos do zero. O {cfg.nomeSistema} junta
-              tudo num painel e trabalha para que nada passe do prazo.
+            <p className="mx-auto mt-6 max-w-2xl text-lg text-[var(--nx-mute)]">
+              Dezenas de clientes, regimes diferentes e prazos que mudam com feriados. Quando tudo depende de planilha
+              e memória, basta um mês corrido. O sistema não tem mês corrido.
             </p>
           </Reveal>
         </div>
       </section>
 
-      {/* RECURSOS */}
-      <section id="recursos" className="relative scroll-mt-24 pb-28">
+      {/* MÓDULOS */}
+      <section id="modulos" className="scroll-mt-24 pb-28">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
           <Reveal className="mb-14 flex flex-col justify-between gap-6 md:flex-row md:items-end">
-            <h2 className="max-w-xl font-[family-name:var(--font-serif)] text-[clamp(2.2rem,4.5vw,3.6rem)] leading-[1.02]">
-              O escritório inteiro,
-              <em className="text-[rgb(var(--brand-300))]"> num só painel.</em>
-            </h2>
-            <p className="max-w-sm text-[#8b90a6]">
-              40 módulos entre fiscal, Receita Federal, trabalhista, contábil e financeiro, organizados por área e entregues em
-              etapas.
+            <div>
+              <Rotulo>Módulos</Rotulo>
+              <h2 className="nx-display mt-5 max-w-xl text-[clamp(2.1rem,4.5vw,3.5rem)] font-semibold leading-[1.02]">
+                O escritório inteiro <span className="nx-glow">num só painel.</span>
+              </h2>
+            </div>
+            <p className="max-w-sm text-[var(--nx-mute)]">
+              Fiscal, pessoal, documentos, clientes e equipe conectados num só sistema, com novos módulos entregues por etapas.
             </p>
           </Reveal>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {RECURSOS.map((r, i) => (
-              <Reveal key={r.titulo} delay={(i % 4) * 80} className={r.grande ? 'sm:col-span-2' : ''}>
-                <div
-                  className={`group relative h-full overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-b from-white/[0.04] to-transparent p-7 transition duration-500 hover:border-[rgb(var(--brand-500)/0.5)] ${
-                    r.grande ? 'min-h-[240px]' : 'min-h-[220px]'
-                  }`}
-                >
-                  <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[rgb(var(--brand-500)/0.0)] blur-3xl transition duration-700 group-hover:bg-[rgb(var(--brand-500)/0.25)]" />
+            {MODULOS.map((m, i) => (
+              <Reveal key={m.titulo} delay={(i % 4) * 80} className={m.grande ? 'sm:col-span-2' : ''}>
+                <div className="nx-frame nx-card group relative h-full min-h-[230px] overflow-hidden rounded-2xl p-7 transition duration-500 hover:border-[var(--nx-cyan)]/40">
+                  <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[var(--nx-cyan)]/0 blur-3xl transition duration-700 group-hover:bg-[var(--nx-cyan)]/20" />
                   <div className="relative flex h-full flex-col">
-                    <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-[rgb(var(--brand-300))] transition group-hover:bg-[rgb(var(--brand-500))] group-hover:text-white">
-                      <r.icon size={20} />
-                    </span>
-                    <h3 className={`mt-auto pt-10 font-medium tracking-tight ${r.grande ? 'text-2xl' : 'text-lg'}`}>{r.titulo}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-[#8b90a6]">{r.texto}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--nx-cyan)]/25 bg-[var(--nx-cyan)]/[0.06] text-[var(--nx-cyan)] transition group-hover:bg-[var(--nx-cyan)] group-hover:text-black">
+                        <m.icon size={20} />
+                      </span>
+                      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/35">{m.tag}</span>
+                    </div>
+                    <h3 className={`nx-display mt-auto pt-10 font-semibold ${m.grande ? 'text-2xl' : 'text-lg'}`}>{m.titulo}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-[var(--nx-mute)]">{m.texto}</p>
                   </div>
                 </div>
               </Reveal>
@@ -318,85 +277,90 @@ export default async function Home() {
       </section>
 
       {/* COMO FUNCIONA */}
-      <section id="como-funciona" className="relative scroll-mt-24 overflow-hidden border-y border-white/[0.06] py-28">
-        <div className="lp-orbit absolute -right-[300px] top-1/2 h-[700px] w-[700px] -translate-y-1/2 rounded-full border border-dashed border-white/[0.07]" />
-        <div
-          className="lp-orbit absolute -right-[180px] top-1/2 h-[460px] w-[460px] -translate-y-1/2 rounded-full border border-white/[0.05]"
-          style={{ animationDirection: 'reverse' }}
-        />
+      <section id="como-funciona" className="relative scroll-mt-24 overflow-hidden border-y border-[var(--nx-line)] py-28">
+        <div className="nx-spin-slow absolute -right-[280px] top-40 h-[680px] w-[680px] rounded-full border border-dashed border-[var(--nx-cyan)]/15" />
         <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
           <Reveal>
-            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[rgb(var(--signal))]">Como funciona</p>
-            <h2 className="mt-5 max-w-2xl font-[family-name:var(--font-serif)] text-[clamp(2.2rem,4.5vw,3.6rem)] leading-[1.02]">
-              Três passos e o mês
-              <em className="text-white/40"> se organiza sozinho.</em>
+            <Rotulo>Como funciona</Rotulo>
+            <h2 className="nx-display mt-5 max-w-2xl text-[clamp(2.1rem,4.5vw,3.5rem)] font-semibold leading-[1.02]">
+              Três passos. <span className="text-white/35">Depois, o sistema vigia por você.</span>
             </h2>
           </Reveal>
-          <div className="mt-16 grid gap-6 md:grid-cols-3">
+          <div className="relative mt-16 grid gap-6 md:grid-cols-3">
             {PASSOS.map((p, i) => (
-              <Reveal key={p.n} delay={i * 120}>
-                <div className="relative h-full rounded-3xl border border-white/[0.08] bg-[#07080d] p-8">
-                  <span className="font-[family-name:var(--font-serif)] text-7xl leading-none text-transparent [-webkit-text-stroke:1px_rgb(var(--brand-300)/0.5)]">
-                    {p.n}
-                  </span>
-                  <h3 className="mt-8 text-xl font-medium">{p.titulo}</h3>
-                  <p className="mt-2 text-[#8b90a6]">{p.texto}</p>
+              <Reveal key={p.n} delay={i * 140}>
+                <div className="nx-frame nx-card relative h-full rounded-2xl p-8">
+                  <span className="nx-display text-6xl font-bold leading-none text-transparent [-webkit-text-stroke:1px_rgba(62,240,255,0.6)]">{p.n}</span>
+                  <h3 className="nx-display mt-8 text-xl font-semibold">{p.t}</h3>
+                  <p className="mt-2 text-[var(--nx-mute)]">{p.d}</p>
                 </div>
               </Reveal>
             ))}
           </div>
+          <Reveal className="mt-16">
+            <p className="mb-5 font-mono text-[11px] uppercase tracking-[0.24em] text-[var(--nx-cyan)]">▶ Tutorial em vídeo · 6 minutos</p>
+            <VideoTutorial />
+          </Reveal>
+          <Reveal className="mt-12 text-center">
+            <a href={ZAP_DEMO} {...ext} className="nx-btn inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-7 py-4 font-semibold">
+              Quero ver no meu escritório <ArrowRight size={18} />
+            </a>
+          </Reveal>
         </div>
       </section>
 
-      {/* DESTAQUE */}
+      {/* ANTES x DEPOIS */}
       <section className="py-28">
-        <div className="mx-auto grid max-w-7xl items-center gap-14 px-5 sm:px-8 lg:grid-cols-2">
-          <Reveal>
-            <div className="rounded-3xl border border-white/[0.08] bg-[#0b0d14] p-3 shadow-[0_30px_100px_-30px_rgb(var(--brand-500)/0.5)]">
-              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3.5">
-                <Search size={17} className="text-white/40" />
-                <span className="text-white/80">padaria sol nascente</span>
-              </div>
-              <div className="mt-2 space-y-1">
-                {[
-                  { icon: Receipt, t: 'PGDAS-D e DAS · competência 09/2026', d: 'Simples Nacional · vence 20/10' },
-                  { icon: FilePenLine, t: 'Contrato de serviços contábeis.doc', d: 'Gerado com IA' },
-                  { icon: Users, t: '6 funcionários ativos', d: 'eSocial e FGTS na agenda do mês' },
-                ].map((x, i) => (
-                  <div key={x.t} className={`flex items-center gap-3 rounded-xl px-4 py-3 ${i === 0 ? 'bg-[rgb(var(--brand-500)/0.15)]' : ''}`}>
-                    <span className={`flex h-9 w-9 items-center justify-center rounded-lg ${i === 0 ? 'bg-[rgb(var(--brand-500))] text-white' : 'bg-white/5 text-white/50'}`}>
-                      <x.icon size={16} />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm text-white">{x.t}</p>
-                      <p className="truncate text-xs text-white/45">{x.d}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <p className="mt-3 text-center text-xs text-white/30">Ilustração com dados fictícios.</p>
-          </Reveal>
-          <Reveal delay={120}>
-            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[rgb(var(--signal))]">Produtividade</p>
-            <h2 className="mt-5 font-[family-name:var(--font-serif)] text-[clamp(2.2rem,4.5vw,3.6rem)] leading-[1.02]">
-              Do CNPJ ao documento
-              <em className="text-[rgb(var(--brand-300))]"> em minutos.</em>
+        <div className="mx-auto max-w-6xl px-5 sm:px-8">
+          <Reveal className="text-center">
+            <Rotulo>Antes e depois</Rotulo>
+            <h2 className="nx-display mt-5 text-[clamp(2.1rem,4.5vw,3.5rem)] font-semibold leading-[1.02]">
+              A rotina do escritório, <span className="nx-glow">reprogramada.</span>
             </h2>
-            <p className="mt-6 text-lg text-[#8b90a6]">
-              Cadastre o cliente pelo CNPJ, veja as obrigações dele no calendário e gere o contrato, a declaração ou a procuração
-              com a IA, já com os dados preenchidos.
-            </p>
-            <ul className="mt-8 space-y-3">
-              {['200 modelos em 11 categorias', 'Exportação para Word (.doc)', 'Calendário com feriados nacionais'].map((t) => (
-                <li key={t} className="flex items-start gap-3 text-white/80">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[rgb(var(--signal)/0.15)]">
-                    <Check size={12} className="text-[rgb(var(--signal))]" strokeWidth={3} />
-                  </span>
-                  {t}
-                </li>
-              ))}
-            </ul>
+          </Reveal>
+          <div className="mt-14 grid gap-5 md:grid-cols-2">
+            <Reveal>
+              <div className="h-full rounded-2xl border border-white/[0.06] bg-white/[0.015] p-8">
+                <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-white/40">Sem o sistema</p>
+                <ul className="mt-6 space-y-4">
+                  {ANTES.map((t) => (
+                    <li key={t} className="flex items-start gap-3 text-white/50">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-500/10"><X size={12} className="text-red-400" strokeWidth={3} /></span>
+                      <span className="line-through decoration-white/20">{t}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
+            <Reveal delay={120}>
+              <div className="nx-frame h-full rounded-2xl border border-[var(--nx-cyan)]/30 bg-gradient-to-b from-[var(--nx-cyan)]/[0.08] to-transparent p-8 shadow-[0_30px_100px_-40px_rgba(62,240,255,0.6)]">
+                <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--nx-cyan)]">Com o {cfg.nomeSistema}</p>
+                <ul className="mt-6 space-y-4">
+                  {DEPOIS.map((t) => (
+                    <li key={t} className="flex items-start gap-3 text-white">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--nx-cyan)]/15"><Check size={12} className="text-[var(--nx-cyan)]" strokeWidth={3} /></span>
+                      {t}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+      {/* CALCULADORA */}
+      <section id="calculadora" className="scroll-mt-24 pb-28">
+        <div className="mx-auto max-w-7xl px-5 sm:px-8">
+          <Reveal className="mb-12 max-w-2xl">
+            <Rotulo>Calculadora</Rotulo>
+            <h2 className="nx-display mt-5 text-[clamp(2.1rem,4.5vw,3.5rem)] font-semibold leading-[1.02]">
+              Quanto custa o <span className="text-[var(--nx-amber)]">trabalho manual?</span>
+            </h2>
+            <p className="mt-4 text-[var(--nx-mute)]">Ajuste com a realidade do seu escritório.</p>
+          </Reveal>
+          <Reveal>
+            <Calculadora cadastro={ZAP_DEMO} whatsapp={ZAP} preco={cfg.precoAVista} />
           </Reveal>
         </div>
       </section>
@@ -405,26 +369,26 @@ export default async function Home() {
       <section id="seguranca" className="scroll-mt-24 pb-28">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
           <Reveal>
-            <div className="relative overflow-hidden rounded-[32px] border border-white/[0.08] bg-gradient-to-br from-[#0d0e1a] to-[#05060a] p-8 sm:p-14">
-              <div className="absolute right-0 top-0 h-full w-1/2 bg-[radial-gradient(circle_at_80%_20%,rgb(var(--brand-500)/0.25),transparent_60%)]" />
+            <div className="nx-frame relative overflow-hidden rounded-3xl border border-[var(--nx-line)] bg-gradient-to-br from-[#06102a] to-[#02040a] p-8 sm:p-14">
+              <div className="absolute right-0 top-0 h-full w-1/2 bg-[radial-gradient(circle_at_80%_20%,rgba(43,107,255,0.3),transparent_60%)]" />
               <div className="relative grid gap-12 lg:grid-cols-[1fr_1.2fr]">
                 <div>
-                  <ShieldCheck size={32} className="text-[rgb(var(--signal))]" />
-                  <h2 className="mt-6 font-[family-name:var(--font-serif)] text-[clamp(2rem,4vw,3.2rem)] leading-[1.05]">
-                    Sigilo fiscal
-                    <em className="text-white/40"> levado a sério.</em>
+                  <ShieldCheck size={34} className="text-[var(--nx-cyan)]" />
+                  <h2 className="nx-display mt-6 text-[clamp(2rem,4vw,3.1rem)] font-semibold leading-[1.05]">
+                    Dados fiscais <span className="text-white/35">em nível de cofre.</span>
                   </h2>
                 </div>
                 <div className="grid gap-6 sm:grid-cols-2">
                   {[
-                    { t: 'Dados isolados', d: 'Cada escritório só acessa os próprios clientes, notas e documentos.' },
-                    { t: 'Certificados criptografados', d: 'Arquivo .pfx e senha guardados com AES-256, nunca expostos na tela.' },
-                    { t: 'Chaves protegidas', d: 'Credenciais do SERPRO e de gateways cifradas e mascaradas.' },
-                    { t: 'Senhas seguras', d: 'Senhas de acesso guardadas com hash bcrypt.' },
+                    { i: Lock, t: 'Certificados criptografados', d: 'Arquivo A1 e senha guardados com AES-256 e usados só pelas integrações.' },
+                    { i: Users, t: 'Permissões por usuário', d: 'Cada pessoa da equipe acessa só os módulos liberados para ela.' },
+                    { i: History, t: 'Escritórios isolados', d: 'Multiempresa: cada escritório vê apenas os próprios clientes e dados.' },
+                    { i: Fingerprint, t: 'Acesso controlado', d: 'Contas criadas pela nossa equipe, com licença e validade por escritório.' },
                   ].map((x) => (
-                    <div key={x.t} className="border-l border-white/10 pl-5">
-                      <p className="font-medium">{x.t}</p>
-                      <p className="mt-1.5 text-sm leading-relaxed text-[#8b90a6]">{x.d}</p>
+                    <div key={x.t} className="border-l border-[var(--nx-cyan)]/25 pl-5">
+                      <x.i size={18} className="text-[var(--nx-cyan)]" />
+                      <p className="mt-3 font-medium">{x.t}</p>
+                      <p className="mt-1.5 text-sm leading-relaxed text-[var(--nx-mute)]">{x.d}</p>
                     </div>
                   ))}
                 </div>
@@ -438,89 +402,48 @@ export default async function Home() {
       <section id="planos" className="scroll-mt-24 pb-28">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
           <Reveal className="text-center">
-            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[rgb(var(--signal))]">Preço</p>
-            <h2 className="mt-5 font-[family-name:var(--font-serif)] text-[clamp(2.2rem,4.5vw,3.6rem)] leading-[1.02]">
-              Um investimento,
-              <em className="text-white/40"> um ano inteiro de tranquilidade.</em>
+            <Rotulo>Preço</Rotulo>
+            <h2 className="nx-display mt-5 text-[clamp(2.1rem,4.5vw,3.5rem)] font-semibold leading-[1.02]">
+              Um plano completo. <span className="text-white/35">Sem módulo escondido.</span>
             </h2>
           </Reveal>
-          <div className="mx-auto mt-16 grid max-w-5xl gap-6 lg:grid-cols-[0.85fr_1.15fr]">
-            <Reveal>
-              <div className="flex h-full flex-col rounded-3xl border border-white/[0.08] bg-[#07080d] p-8">
-                <p className="text-sm font-medium text-white/70">Demonstração</p>
-                <p className="mt-6 flex items-baseline gap-2">
-                  <span className="font-[family-name:var(--font-serif)] text-6xl">R$ 0</span>
-                  <span className="text-[#8b90a6]">ao vivo</span>
+          <Reveal className="mx-auto mt-16 max-w-3xl">
+            <div className="nx-frame relative overflow-hidden rounded-3xl border border-[var(--nx-cyan)]/45 bg-gradient-to-b from-[#06213a] to-[#02040a] p-8 shadow-[0_40px_140px_-30px_rgba(62,240,255,0.55)] sm:p-10">
+              <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[var(--nx-cyan)]/20 blur-3xl" />
+              <div className="relative">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--nx-cyan)]">Plano Pro</p>
+                  <span className="rounded-full bg-[var(--nx-amber)] px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-black">Completo</span>
+                </div>
+                <p className="mt-6 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="nx-display text-6xl font-bold sm:text-7xl">{AVISTA}</span>
+                  <span className="text-[var(--nx-mute)]">à vista</span>
                 </p>
-                <p className="mt-3 text-sm text-[#8b90a6]">Veja o sistema funcionando com um especialista antes de decidir.</p>
-                <ul className="mt-8 space-y-3 text-sm text-white/80">
-                  {['Apresentação pelo WhatsApp ou vídeo', 'Tire as dúvidas do seu escritório', 'Sem compromisso'].map((t) => (
-                    <li key={t} className="flex items-center gap-3">
-                      <Check size={16} className="text-white/50" /> {t}
+                <p className="mt-2 inline-flex w-fit items-center gap-2 rounded-full border border-[var(--nx-cyan)]/30 bg-[var(--nx-cyan)]/10 px-3 py-1 text-sm">
+                  ou <b className="text-[var(--nx-cyan)]">{PARCELADO}</b>
+                </p>
+                <ul className="mt-8 grid gap-3 text-sm text-white/85 sm:grid-cols-2">
+                  {['Agenda de obrigações automática', 'Folha, férias, 13º e rescisões', 'Arquivo fiscal (XML e PDF)', '200 modelos com IA', 'Carteira importada pelo CNPJ', 'Cofre de certificados A1', 'Integrações com os órgãos', '12 meses de suporte total'].map((t) => (
+                    <li key={t} className="flex items-start gap-3">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--nx-cyan)]/15"><Check size={12} className="text-[var(--nx-cyan)]" strokeWidth={3} /></span>
+                      {t}
                     </li>
                   ))}
                 </ul>
-                <a href={ZAP_DEMO} target="_blank" rel="noopener noreferrer" className="mt-auto pt-10">
-                  <span className="flex items-center justify-center gap-2 rounded-2xl border border-white/15 px-6 py-3.5 font-medium text-white transition hover:border-white/30 hover:bg-white/[0.04]">
-                    Agendar demonstração <ArrowRight size={16} />
-                  </span>
-                </a>
-              </div>
-            </Reveal>
-            <Reveal delay={120}>
-              <div className="relative h-full overflow-hidden rounded-3xl border border-[rgb(var(--brand-500)/0.5)] bg-gradient-to-b from-[rgb(var(--brand-950))] to-[#07080d] p-8 shadow-[0_40px_120px_-30px_rgb(var(--brand-500)/0.6)]">
-                <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[rgb(var(--brand-500)/0.3)] blur-3xl" />
-                <div className="relative flex h-full flex-col">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium text-[rgb(var(--brand-300))]">Plano Pro</p>
-                    <span className="rounded-full bg-[rgb(var(--signal))] px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--signal-ink))]">Completo</span>
-                  </div>
-                  <p className="mt-6 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <span className="font-[family-name:var(--font-serif)] text-6xl sm:text-7xl">{AVISTA}</span>
-                    <span className="text-[#8b90a6]">à vista</span>
-                  </p>
-                  <p className="mt-2 inline-flex w-fit items-center gap-2 rounded-full border border-[rgb(var(--signal)/0.3)] bg-[rgb(var(--signal)/0.1)] px-3 py-1 text-sm text-white">
-                    ou <b className="text-[rgb(var(--signal))]">{PARCELADO}</b>
-                  </p>
-                  <p className="mt-3 text-sm text-white/70">
-                    À vista, equivale a <b className="text-white">{reais(Math.round(cfg.precoAVista / 12))} por mês</b> no primeiro ano, com <b className="text-white">12 meses de suporte total</b> incluídos.
-                  </p>
-                  <ul className="mt-8 grid gap-3 text-sm text-white/85 sm:grid-cols-2">
-                    {[
-                      'Agenda de obrigações automática',
-                      '200 modelos de documentos com IA',
-                      'Clientes importados pelo CNPJ',
-                      'Cofre de certificados A1',
-                      'Notas, financeiro e documentos',
-                      'Integrações com os órgãos',
-                      'Instalação e treinamento',
-                      'Suporte total por 12 meses',
-                    ].map((t) => (
-                      <li key={t} className="flex items-start gap-3">
-                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[rgb(var(--signal)/0.15)]">
-                          <Check size={12} className="text-[rgb(var(--signal))]" strokeWidth={3} />
-                        </span>
-                        {t}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4 text-sm text-white/70">
-                    Após o primeiro ano: <b className="text-white">{MENSAL}/mês</b>, conforme contrato.
-                  </div>
-                  <a
-                    href={ZAP_COMPRAR}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group mt-8 inline-flex items-center justify-center gap-2 rounded-2xl bg-[rgb(var(--signal))] px-6 py-4 font-semibold text-[rgb(var(--signal-ink))] transition hover:shadow-[0_0_50px_rgb(var(--signal)/0.45)]"
-                  >
-                    Contratar o Plano Pro
-                    <ArrowRight size={17} className="transition-transform group-hover:translate-x-1" />
+                <div className="mt-8 rounded-xl border border-white/10 bg-white/[0.03] px-5 py-4 text-sm text-white/70">
+                  A partir do 13º mês: <b className="text-white">{MENSAL}/mês</b>, conforme contrato.
+                </div>
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                  <a href={ZAP_COMPRAR} {...ext} className="nx-btn inline-flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-6 py-4 font-semibold">
+                    <MessageCircle size={18} /> Contratar pelo WhatsApp
                   </a>
-                  <p className="mt-3 text-center text-xs text-[#8b90a6]">Atendimento pelo WhatsApp {WHATSAPP_EXIBICAO}</p>
+                  <a href={ZAP_DEMO} {...ext} className="inline-flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-white/15 px-6 py-4 font-medium transition hover:border-[var(--nx-cyan)]/50">
+                    Ver demonstração antes <ArrowRight size={16} />
+                  </a>
                 </div>
               </div>
-            </Reveal>
-          </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 
@@ -528,20 +451,23 @@ export default async function Home() {
       <section id="faq" className="scroll-mt-24 pb-28">
         <div className="mx-auto grid max-w-7xl gap-12 px-5 sm:px-8 lg:grid-cols-[0.8fr_1.2fr]">
           <Reveal>
-            <h2 className="font-[family-name:var(--font-serif)] text-[clamp(2.2rem,4.5vw,3.6rem)] leading-[1.02]">
-              Perguntas
-              <em className="text-white/40"> frequentes.</em>
+            <Rotulo>Dúvidas</Rotulo>
+            <h2 className="nx-display mt-5 text-[clamp(2.1rem,4.5vw,3.5rem)] font-semibold leading-[1.02]">
+              Perguntas <span className="text-white/35">frequentes.</span>
             </h2>
-            <p className="mt-4 text-[#8b90a6]">Não encontrou o que procurava? Chame a gente no WhatsApp {WHATSAPP_EXIBICAO}.</p>
+            <p className="mt-4 text-[var(--nx-mute)]">Ficou alguma dúvida? Um especialista responde no WhatsApp.</p>
+            <a href={ZAP} {...ext} className="nx-btn-wa mt-6 inline-flex items-center gap-2 rounded-xl px-5 py-3 font-medium">
+              <MessageCircle size={17} className="text-[var(--nx-wa)]" /> {WHATS}
+            </a>
           </Reveal>
-          <div className="divide-y divide-white/[0.08] border-y border-white/[0.08]">
+          <div className="divide-y divide-[var(--nx-line)] border-y border-[var(--nx-line)]">
             {FAQ.map((f) => (
               <details key={f.p} className="group py-6">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-6 text-lg font-medium [&::-webkit-details-marker]:hidden">
                   {f.p}
-                  <Plus size={20} className="shrink-0 text-white/40 transition-transform duration-300 group-open:rotate-45 group-open:text-[rgb(var(--signal))]" />
+                  <Plus size={20} className="shrink-0 text-white/40 transition-transform duration-300 group-open:rotate-45 group-open:text-[var(--nx-cyan)]" />
                 </summary>
-                <p className="mt-4 max-w-2xl leading-relaxed text-[#8b90a6]">{f.r}</p>
+                <p className="mt-4 max-w-2xl leading-relaxed text-[var(--nx-mute)]">{f.r}</p>
               </details>
             ))}
           </div>
@@ -549,58 +475,50 @@ export default async function Home() {
       </section>
 
       {/* CTA FINAL */}
-      <section className="px-5 pb-24 sm:px-8">
+      <section className="px-5 pb-28 sm:px-8">
         <Reveal>
-          <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[36px] bg-[rgb(var(--signal))] px-8 py-20 text-center text-[rgb(var(--signal-ink))] sm:py-28">
-            <div className="absolute inset-0 opacity-[0.12] [background-image:linear-gradient(rgb(var(--signal-ink))_1px,transparent_1px),linear-gradient(90deg,rgb(var(--signal-ink))_1px,transparent_1px)] [background-size:40px_40px]" />
+          <div className="nx-frame relative mx-auto max-w-7xl overflow-hidden rounded-[32px] border border-[var(--nx-cyan)]/30 bg-[#020a18] px-8 py-20 text-center sm:py-28">
+            <div className="nx-floor absolute inset-x-[-20%] bottom-0 h-1/2 opacity-60" />
+            <div className="absolute left-1/2 top-0 h-[400px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(62,240,255,0.35),transparent)] blur-2xl" />
             <div className="relative">
-              <h2 className="mx-auto max-w-3xl font-[family-name:var(--font-serif)] text-[clamp(2.6rem,6vw,5.2rem)] leading-[0.95]">
-                O próximo vencimento já está
-                <em> chegando.</em>
+              <h2 className="nx-display mx-auto max-w-3xl text-[clamp(2.4rem,6vw,5rem)] font-bold leading-[0.95]">
+                O próximo vencimento <span className="nx-glow">já está na agenda.</span>
               </h2>
-              <p className="mx-auto mt-6 max-w-lg text-lg text-[rgb(var(--signal-ink)/0.65)]">Configure hoje e gere amanhã a agenda do mês de toda a carteira.</p>
-              <a
-                href={ZAP_COMPRAR}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group mt-10 inline-flex items-center gap-2 rounded-2xl bg-[rgb(var(--signal-ink))] px-8 py-4 text-base font-semibold text-[rgb(var(--signal))] transition hover:scale-[1.02]"
-              >
-                Falar no WhatsApp
-                <ArrowUpRight size={18} className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-              </a>
-              <p className="mt-4 text-sm text-[rgb(var(--signal-ink)/0.55)]">{PRECO} · {WHATSAPP_EXIBICAO}</p>
+              <p className="mx-auto mt-6 max-w-lg text-lg text-white/65">Veja o sistema funcionando com a realidade do seu escritório.</p>
+              <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
+                <a href={ZAP_DEMO} {...ext} className="nx-btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl px-8 py-4 text-base font-semibold">
+                  Agendar demonstração <ArrowRight size={18} />
+                </a>
+                <a href={ZAP} {...ext} className="nx-btn-wa inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl px-7 py-4 text-base font-medium">
+                  <MessageCircle size={18} className="text-[var(--nx-wa)]" /> Falar com especialista
+                </a>
+              </div>
             </div>
           </div>
         </Reveal>
       </section>
 
       {/* WhatsApp flutuante */}
-      <a
-        href={ZAP_COMPRAR}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Falar no WhatsApp"
-        className="group fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full bg-[#25d366] p-3.5 text-black shadow-[0_10px_40px_-5px_rgba(37,211,102,0.6)] transition-all hover:pr-5"
-      >
-        <MessageCircle size={24} strokeWidth={2.2} />
-        <span className="max-w-0 overflow-hidden whitespace-nowrap text-sm font-semibold transition-all duration-300 group-hover:max-w-[180px]">
-          Falar com especialista
-        </span>
+      <a href={ZAP} {...ext} aria-label="Falar no WhatsApp" className="group fixed bottom-20 right-4 z-50 flex items-center gap-2 rounded-full bg-[var(--nx-wa)] p-3.5 text-black shadow-[0_10px_40px_-5px_rgba(37,211,102,0.7)] transition-all hover:pr-5 sm:bottom-6 sm:right-6">
+        <span className="nx-ping absolute inset-0 rounded-full bg-[var(--nx-wa)]/40" />
+        <MessageCircle size={24} strokeWidth={2.2} className="relative" />
+        <span className="relative max-w-0 overflow-hidden whitespace-nowrap text-sm font-semibold transition-all duration-300 group-hover:max-w-[180px]">Falar com especialista</span>
       </a>
 
+      {/* Barra fixa no celular */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--nx-line)] bg-[#02040a]/90 p-3 backdrop-blur-xl sm:hidden">
+        <a href={ZAP_DEMO} {...ext} className="nx-btn flex items-center justify-center gap-2 rounded-xl py-3.5 font-semibold">
+          Agendar demonstração <ArrowRight size={17} />
+        </a>
+      </div>
+
       {/* RODAPÉ */}
-      <footer className="border-t border-white/[0.06]">
+      <footer className="border-t border-[var(--nx-line)] pb-20 sm:pb-0">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-5 py-10 text-sm text-white/40 sm:flex-row sm:px-8">
-          <div className="flex items-center gap-2">
-            <Calculator size={15} /> {cfg.nomeSistema}
-          </div>
+          <div className="flex items-center gap-2"><Calculator size={15} /> {cfg.nomeSistema}</div>
           <div className="flex gap-6">
-            <Link href="/login" className="hover:text-white">
-              Entrar
-            </Link>
-            <a href={ZAP_COMPRAR} target="_blank" rel="noopener noreferrer" className="hover:text-white">
-              WhatsApp {WHATSAPP_EXIBICAO}
-            </a>
+            <Link href="/login" className="hover:text-white">Entrar</Link>
+            <a href={ZAP} {...ext} className="hover:text-white">WhatsApp</a>
           </div>
           <p>© {new Date().getFullYear()} {cfg.nomeSistema}</p>
         </div>
