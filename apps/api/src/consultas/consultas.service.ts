@@ -186,9 +186,13 @@ export class ConsultasService {
     return Promise.all(
       SERIES_BCB.map(async (s) => {
         try {
-          const dados = await this.buscarJson<{ data: string; valor: string }[]>(
-            `https://api.bcb.gov.br/dados/serie/bcdata.sgs.${s.codigo}/dados/ultimos/13?formato=json`,
-          );
+          const url = `https://api.bcb.gov.br/dados/serie/bcdata.sgs.${s.codigo}/dados/ultimos/13?formato=json`;
+          const dados = await this.buscarJson<{ data: string; valor: string }[]>(url);
+          // O SGS às vezes responde 200 com {"erro":{}} em vez da lista: não guarda no cache.
+          if (!Array.isArray(dados)) {
+            this.cache.delete(url);
+            throw new Error('O Banco Central não publicou a série agora. Tente mais tarde.');
+          }
           const mesAtual = new Date().toISOString().slice(0, 7);
           const valores = dados
             .map((d) => ({ mes: mesDe(d.data), valor: Number(d.valor) }))
