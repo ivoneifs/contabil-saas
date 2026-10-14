@@ -93,3 +93,134 @@ body {
   @page { size: A4; margin: 12mm; }
   .holerite { break-inside: avoid; }
 }
+
+/* ---------- Landing futurista (central de comando) ---------- */
+.nx {
+  --nx-bg: #02040a;
+  --nx-ink: #e6f0ff;
+  --nx-mute: #7d8aa5;
+  --nx-line: rgba(110, 170, 255, 0.1);
+  --nx-cyan: #3ef0ff;
+  --nx-blue: #2b6bff;
+  --nx-amber: #ffb547;
+  --nx-wa: #25d366;
+  background: var(--nx-bg);
+  color: var(--nx-ink);
+}
+.nx ::selection { background: var(--nx-cyan); color: #000; }
+.nx-display { font-family: var(--font-display), ui-sans-serif, system-ui; letter-spacing: -0.02em; }
+.nx-glow {
+  background: linear-gradient(100deg, #fff 0%, var(--nx-cyan) 45%, var(--nx-blue) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 28px rgba(62, 240, 255, 0.35));
+}
+.nx-grid {
+  background-image:
+    linear-gradient(var(--nx-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--nx-line) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 75% 65% at 50% 0%, #000 30%, transparent 100%);
+}
+.nx-floor {
+  background-image:
+    linear-gradient(rgba(62, 240, 255, 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(62, 240, 255, 0.22) 1px, transparent 1px);
+  background-size: 60px 60px;
+  transform: perspective(500px) rotateX(62deg);
+  transform-origin: top center;
+  mask-image: linear-gradient(to bottom, #000, transparent 85%);
+  animation: nx-floor 3s linear infinite;
+}
+@keyframes nx-floor { to { background-position: 0 60px; } }
+.nx-scanlines::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 70;
+  background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 3px);
+}
+/* Cantos de HUD em qualquer card */
+.nx-frame { position: relative; }
+.nx-frame::after {
+  --c: rgba(62, 240, 255, 0.7);
+  content: "";
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    linear-gradient(var(--c), var(--c)) top left / 16px 1px no-repeat,
+    linear-gradient(var(--c), var(--c)) top left / 1px 16px no-repeat,
+    linear-gradient(var(--c), var(--c)) top right / 16px 1px no-repeat,
+    linear-gradient(var(--c), var(--c)) top right / 1px 16px no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom left / 16px 1px no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom left / 1px 16px no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom right / 16px 1px no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom right / 1px 16px no-repeat;
+}
+.nx-card {
+  border: 1px solid var(--nx-line);
+  background: linear-gradient(180deg, rgba(20, 40, 80, 0.25), rgba(4, 8, 18, 0.6));
+  backdrop-filter: blur(12px);
+}
+.nx-btn {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(100deg, var(--nx-cyan), #7cf7ff 50%, var(--nx-cyan));
+  color: #001218;
+  box-shadow: 0 0 0 1px rgba(62, 240, 255, 0.4), 0 10px 40px -8px rgba(62, 240, 255, 0.6);
+  transition: transform 0.2s, box-shadow 0.3s;
+}
+.nx-btn:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px rgba(62, 240, 255, 0.7), 0 14px 60px -6px rgba(62, 240, 255, 0.85); }
+.nx-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-120%) skewX(-20deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), transparent);
+  animation: nx-shine 3.6s ease-in-out infinite;
+}
+@keyframes nx-shine { 0%, 60% { transform: translateX(-120%) skewX(-20deg); } 100% { transform: translateX(220%) skewX(-20deg); } }
+.nx-btn-wa {
+  background: rgba(37, 211, 102, 0.08);
+  border: 1px solid rgba(37, 211, 102, 0.45);
+  color: #d9ffe8;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+.nx-btn-wa:hover { background: rgba(37, 211, 102, 0.18); box-shadow: 0 0 40px -6px rgba(37, 211, 102, 0.6); }
+.nx-sweep {
+  background: conic-gradient(from 0deg, rgba(62, 240, 255, 0.45), rgba(62, 240, 255, 0) 70deg, transparent 360deg);
+  animation: nx-spin 4s linear infinite;
+}
+@keyframes nx-spin { to { transform: rotate(360deg); } }
+.nx-spin-slow { animation: nx-spin 60s linear infinite; }
+.nx-blip { animation: nx-blip 4s ease-out infinite; }
+@keyframes nx-blip {
+  0%, 8% { opacity: 0; transform: scale(0.4); }
+  12% { opacity: 1; transform: scale(1.4); }
+  40% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0.15; transform: scale(1); }
+}
+.nx-ping { animation: nx-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
+@keyframes nx-ping { 75%, 100% { transform: scale(2.4); opacity: 0; } }
+.nx-marquee { animation: nx-marquee 38s linear infinite; }
+@keyframes nx-marquee { to { transform: translateX(-50%); } }
+.nx-float { animation: nx-float 6s ease-in-out infinite; }
+@keyframes nx-float { 50% { transform: translateY(-10px); } }
+.nx-beam {
+  background: linear-gradient(to bottom, transparent, var(--nx-cyan), transparent);
+  animation: nx-beam 3.2s ease-in-out infinite;
+}
+@keyframes nx-beam { from { transform: translateY(-100%); } to { transform: translateY(300%); } }
+.nx-beam-x {
+  background: linear-gradient(to right, transparent, var(--nx-cyan), transparent);
+  animation: nx-beam-x 3.2s ease-in-out infinite;
+}
+@keyframes nx-beam-x { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+.nx-range { accent-color: var(--nx-cyan); width: 100%; }
+@media (prefers-reduced-motion: reduce) {
+  .nx-floor, .nx-btn::before, .nx-sweep, .nx-spin-slow, .nx-blip, .nx-ping, .nx-marquee, .nx-float, .nx-beam, .nx-beam-x { animation: none; }
+}
